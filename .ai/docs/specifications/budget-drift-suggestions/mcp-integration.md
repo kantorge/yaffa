@@ -27,4 +27,4 @@ Would apply a `replace` proposal through `BudgetService::replace` (the old row e
 - **Ability:** `write`. It must reuse the existing budget store/replace validation, not bypass it.
 - **Input:** `budget_id` (the chosen candidate; null for `create`), `effective_date`, `amount` (per occurrence, in the row's currency, as in the suggestion/candidate), and `category_id` for `create`.
 - The agent should show the proposal to the user and apply it only on the user's approval: the product intent is that the user judges and decides every change.
-- Stopping monitoring for a category is a category update (`budget_suggestions_excluded`), not a budget write.
+- Stopping monitoring for a category is a category update (`calculate_budget_suggestions` = false), not a budget write.

@@ -87,6 +87,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.destroy' => ['api.v1.budgets.destroy', 'delete', 'write', ['budget' => 1]],
             'categories.store' => ['api.v1.categories.store', 'post', 'write', []],
             'categories.destroy' => ['api.v1.categories.destroy', 'delete', 'write', ['category' => 1]],
+            'categories.patch-budget-suggestions' => ['api.v1.categories.patch-budget-suggestions', 'patch', 'write', ['category' => 1]],
             'payees.auto-record-candidates.recalculate' => ['api.v1.payees.auto-record-candidates.recalculate', 'post', 'write', []],
             'payees.store' => ['api.v1.payees.store', 'post', 'write', []],
             'tags.patch-active' => ['api.v1.tags.patch-active', 'patch', 'write', ['tag' => 1]],
@@ -208,7 +209,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'api.v1.currencies.destroy' => [
                 'currency' => Currency::factory()->for($user)->create()->id,
             ],
-            'api.v1.categories.destroy', 'api.v1.categories.overview' => [
+            'api.v1.categories.destroy', 'api.v1.categories.overview', 'api.v1.categories.patch-budget-suggestions' => [
                 'category' => Category::factory()->for($user)->create()->id,
             ],
             'api.v1.investments.destroy' => [

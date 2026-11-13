@@ -32,8 +32,8 @@ The detector reviews the categories in the run's scope. It uses only periods up 
 
 - **Selected:** the categories checked in the budget report's category tree.
 - **Review all:** every active category that is not excluded. Inactive categories are always skipped.
-- **Opting out:** the flag is set from the category form, or with "Stop monitoring this category" on a recommendation. With no stored dismissals, it is the only way to silence a recommendation that keeps coming back.
-- **Excluding a parent excludes its children.** A category counts as excluded if its own flag or its parent's flag is set. The child's toggle shows "excluded via parent" and is disabled.
+- **Opting out:** the "Calculate budget suggestions" switch (on by default) is turned off from the category form, or with "Stop monitoring this category" on a recommendation. With no stored dismissals, it is the only way to silence a recommendation that keeps coming back.
+- **Excluding a parent excludes its children.** A category counts as excluded if its own switch or its parent's switch is off. The child's toggle shows "excluded via parent" and is disabled.
 - **Excluding a child alone** only stops the child being analysed as its own unit, so it gets no suggestion of its own. If the child has no Budget rows or schedules, its actuals still count toward the parent's unit, because the parent's budget covers it (remainder rule, option A). Removing them would make the parent look underspent.
 
 ### Analysis unit
@@ -170,7 +170,7 @@ The MVP stores no suggestions. Its only database change is one column, and every
 
 | Table        | Column                        | Type, default    | Purpose                  |
 | ------------ | ----------------------------- | ---------------- | ------------------------ |
-| `categories` | `budget_suggestions_excluded` | boolean, `false` | Opt-out for "Review all" |
+| `categories` | `calculate_budget_suggestions` | boolean, `true` | Opt-out switch for "Review all" (off = excluded) |
 
 - No new tables, and no `users` columns. Sensitivity, bias and the detector thresholds are run options with defaults in a `budget_suggestions` block of `config/yaffa.php`.
 - `budgets` is not changed. Accepting a recommendation goes through the existing budget store and replace requests, unmodified.
@@ -348,7 +348,7 @@ Query parameters: `category_ids[]` or `all=1`, plus optional `data_through`, `se
 
 - **Access control:** per-controller `abilities:read` middleware, and a new row in the `ApiAbilityEnforcementTest` data provider (per CLAUDE.md).
 - **Applying a recommendation** uses the existing budget store and replace endpoints, with no new parameter.
-- **Stop monitoring** sets `budget_suggestions_excluded` through the existing category update path.
+- **Stop monitoring** sets `calculate_budget_suggestions` to false through a dedicated category endpoint (`PATCH /api/v1/categories/{category}/budget-suggestions`), because `patchActive` is reserved for the active flag.
 
 ### "Review all"
 
@@ -390,7 +390,7 @@ The MVP has three phases. The MCP tool and scheduled monitoring come later.
 2. **Detector and endpoint:**
     - `BudgetSuggestionService` covering drift, new budgets, verdicts and the recommended series
     - the `budget_suggestions` config block
-    - the `categories.budget_suggestions_excluded` migration
+    - the `categories.calculate_budget_suggestions` migration
     - the GET endpoint, with its ability test
     - the artisan review command
     - Pest unit tests, with the screenshot scenario as a fixture
@@ -476,3 +476,5 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 2b     | Full "Review all" run measured: 4.1 s cold, 1.9 s warm (92 units on the dev data); queued fallback stays in the backlog | Under the 5 s target on one dev user; the cold margin is small, so re-measure on a larger dataset; see phase-2b-handoff.md |
 | 2026-11-13 | 2b     | The backtest only counts suggestions per category per year; it does not compare them with the actuals that followed | Spec asked for both; the comparison is left to the owner's manual check during tuning |
 | 2026-11-13 | 2b     | A user without any currency gets a 422 (endpoint) or an error (command) | The service throws; found in review |
+| 2026-11-13 | 3      | Column renamed `budget_suggestions_excluded` (default false) to `calculate_budget_suggestions` (default true), 2a migration edited in place | "Excluded" was not intuitive on the category form (owner); the column only existed in the dev database, which was rolled back and migrated again. The `excluded` verdict name is unchanged |
+| 2026-11-13 | 3      | "Stop monitoring" uses a new `PATCH /api/v1/categories/{category}/budget-suggestions` endpoint instead of extending `patchActive` | `patchActive` has a dedicated feature (owner); `CategoryRequest` also gets the field, with a default of 0 on unchecked forms |

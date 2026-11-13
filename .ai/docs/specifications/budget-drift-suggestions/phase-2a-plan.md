@@ -4,10 +4,10 @@ Branch `feat/budget-suggestions-phase-2a`, from `feat/budget-suggestions` (phase
 
 ## Files
 
-- **Migration** `add_budget_suggestions_excluded_to_categories_table`: boolean, default `false`, reversible. `Category`: add to `#[Fillable]` and a `boolean` cast. `CategoryRequest`/`CategoryResource` are phase 3 (UI) and left alone.
+- **Migration** `add_calculate_budget_suggestions_to_categories_table`: boolean, default `true`, reversible (originally `budget_suggestions_excluded`, renamed in phase 3). `Category`: add to `#[Fillable]` and a `boolean` cast. `CategoryRequest`/`CategoryResource` are phase 3 (UI) and left alone.
 - **`config/yaffa.php`**: the `budget_suggestions` block, verbatim from the spec.
 - **`app/Services/BudgetSuggestionService.php`**, `run(User, ?array $categoryIds, ?string $dataThrough, ?string $sensitivity, ?string $bias): array`, returning the spec's response contract (`run`, `units`, `series`). It writes nothing. All numbers come from config. Steps:
-    1. **Scope**: selected ids or all active, non-excluded categories; excluded if own or parent flag is set; an explicitly selected excluded one gets `excluded`.
+    1. **Scope**: selected ids or all active, non-excluded categories; excluded if its own or its parent's `calculate_budget_suggestions` is false; an explicitly selected excluded one gets `excluded`.
     2. **Units**: bottom-up as in the spec. A child is its own unit if it has active Budget rows, active schedule items, or passes the regularity test. Otherwise it rolls into the parent. Unit series are sums of `aggregateByCategory()` periods.
     3. **Granularity G**: the coarsest of `default_aggregation` and the longest cadence of contributing Budget rows and schedules (read from the rrule). Cadence beyond a year gives `insufficient_data`. Monthly series are folded into quarters or years; a partly covered period is dropped.
     4. **Verdict pipeline**: `missing_rates`, `insufficient_data`, `cooldown`, `irregular`/new budget, then materiality (with the 0.5% floor), persistence, bias, `needs_review`, `suggestion`.

@@ -2,7 +2,7 @@
 
 ## Built
 - `app/Services/BudgetSuggestionService.php`: `run(User, ?int[] $categoryIds, ?string $dataThrough, ?string $sensitivity, ?string $bias): array`. Read-only; it returns the spec's response contract.
-- Migration `2026_11_12_000001_add_budget_suggestions_excluded_to_categories_table` (boolean, default false). `Category` has the `boolean` cast and the field is `#[Fillable]`. `CategoryRequest`/`CategoryResource` are untouched (phase 3).
+- Migration `2026_11_12_000001_add_calculate_budget_suggestions_to_categories_table` (boolean, default true; the 2a build first shipped it as `budget_suggestions_excluded`, default false, before the rename). `Category` has the `boolean` cast and the field is `#[Fillable]`. `CategoryRequest`/`CategoryResource` are untouched (phase 3).
 - `config/yaffa.php`: the `budget_suggestions` block, verbatim from the spec.
 - `BudgetChartService::aggregateByCategory()`: additive key `missingRatePeriods` (category id => [Y-m-01 => true]). Nothing else changed; `chart()` is untouched.
 - `tests/Feature/Services/BudgetSuggestionServiceTest.php`: 26 tests.

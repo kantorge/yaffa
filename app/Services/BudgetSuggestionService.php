@@ -98,7 +98,7 @@ class BudgetSuggestionService
             if ($explicit) {
                 foreach ($unit['members'] as $memberId) {
                     $member = $categories->get($memberId);
-                    if ($memberId !== $root->id && isset($selected[$memberId]) && $member->active && $member->budget_suggestions_excluded) {
+                    if ($memberId !== $root->id && isset($selected[$memberId]) && $member->active && !$member->calculate_budget_suggestions) {
                         $units[] = $this->unitOutput($member, null, 'excluded', null);
                     }
                 }
@@ -181,7 +181,7 @@ class BudgetSuggestionService
      */
     private function isOwnUnit(Category $child, array $members, array $c): bool
     {
-        if (!$child->active || $child->budget_suggestions_excluded) {
+        if (!$child->active || !$child->calculate_budget_suggestions) {
             return false;
         }
 
@@ -193,13 +193,13 @@ class BudgetSuggestionService
     }
 
     /**
-     * Excluded through its own flag or any ancestor's.
+     * Excluded when its own switch or any ancestor's is off.
      */
     private function isExcluded(Category $category, Collection $categories): bool
     {
         $seen = [];
         while ($category !== null && !isset($seen[$category->id])) {
-            if ($category->budget_suggestions_excluded) {
+            if (!$category->calculate_budget_suggestions) {
                 return true;
             }
             $seen[$category->id] = true;

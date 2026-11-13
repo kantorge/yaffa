@@ -146,6 +146,35 @@
             </div>
 
             <div class="row mb-3">
+                <label for="calculate_budget_suggestions" class="col-form-label col-sm-3">
+                    {{ __('Calculate budget suggestions') }}
+                </label>
+                <div class="col-sm-9">
+                    @php
+                        $parentSuggestionsOff = isset($category) && $category->parent && !$category->parent->calculate_budget_suggestions;
+                        $suggestionsOn = old() ? old('calculate_budget_suggestions') == '1' : (!isset($category) || $category->calculate_budget_suggestions);
+                    @endphp
+                    <input type="hidden" name="calculate_budget_suggestions" value="{{ $parentSuggestionsOff ? ($category->calculate_budget_suggestions ? 1 : 0) : 0 }}">
+                    <input
+                        id="calculate_budget_suggestions"
+                        class="form-check-input"
+                        name="calculate_budget_suggestions"
+                        type="checkbox"
+                        value="1"
+                        @checked($suggestionsOn)
+                        @disabled($parentSuggestionsOff)
+                    >
+                    <div class="form-text">
+                        @if ($parentSuggestionsOff)
+                            {{ __('Excluded via parent category') }}
+                        @else
+                            {{ __('When off, the budget review skips this category and its subcategories.') }}
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="default_aggregation" class="col-form-label col-sm-3">
                     {{ __('Default aggregation') }}
                 </label>

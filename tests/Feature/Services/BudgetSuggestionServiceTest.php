@@ -323,7 +323,7 @@ it('gives insufficient_data below the minimum history', function () {
 
 it('skips excluded and inactive categories in review-all but reports an explicitly selected excluded one', function () {
     $normal = newCategory();
-    $excluded = newCategory(['budget_suggestions_excluded' => true]);
+    $excluded = newCategory(['calculate_budget_suggestions' => false]);
     $inactive = newCategory(['active' => false]);
     foreach ([$normal, $excluded, $inactive] as $category) {
         budgetRow($category);
@@ -341,7 +341,7 @@ it('skips excluded and inactive categories in review-all but reports an explicit
 });
 
 it('excludes the children of an excluded parent', function () {
-    $parent = newCategory(['budget_suggestions_excluded' => true]);
+    $parent = newCategory(['calculate_budget_suggestions' => false]);
     $child = newCategory(['parent_id' => $parent->id]);
     budgetRow($child);
     spendMonthly($child, '2025-12', '2026-11', 24000);
@@ -352,7 +352,7 @@ it('excludes the children of an excluded parent', function () {
 
 it('counts an excluded child without budgets toward its parent unit', function () {
     $parent = newCategory();
-    $child = newCategory(['parent_id' => $parent->id, 'budget_suggestions_excluded' => true]);
+    $child = newCategory(['parent_id' => $parent->id, 'calculate_budget_suggestions' => false]);
     budgetRow($parent, ['amount' => 30000]);
     spendMonthly($parent, '2025-12', '2026-11', 20000);
     spendMonthly($child, '2025-12', '2026-11', 10000);
@@ -440,7 +440,7 @@ it('spreads the gap over inflation multipliers when the horizon crosses a year b
 
 it('reports an excluded member the user explicitly selected under a non-excluded root', function () {
     $parent = newCategory();
-    $child = newCategory(['parent_id' => $parent->id, 'budget_suggestions_excluded' => true]);
+    $child = newCategory(['parent_id' => $parent->id, 'calculate_budget_suggestions' => false]);
     budgetRow($parent, ['amount' => 30000]);
     spendMonthly($parent, '2025-12', '2026-11', 20000);
     spendMonthly($child, '2025-12', '2026-11', 10000);
