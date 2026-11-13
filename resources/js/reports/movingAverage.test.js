@@ -44,3 +44,10 @@ test('quarter window is 4 quarters and the open quarter is excluded', () => {
   assert.equal(out[4].movingAverage, (20 + 30 + 40 + 50) / 4); // Q1 2026 complete
   assert.equal(out[5].movingAverage, out[4].movingAverage);
 });
+
+test('history counts from the first actual, so leading empty rows do not dilute it', () => {
+  const rows = months([0, 0, 0, 10, 20]);
+  const out = computeMovingAverage(rows, 'month', new Date(2025, 8, 1));
+  assert.equal(out[4].movingAverage, 15);
+  assert.equal(out[1].movingAverage, undefined);
+});

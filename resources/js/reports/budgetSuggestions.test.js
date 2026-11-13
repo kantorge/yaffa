@@ -6,6 +6,7 @@ import {
   buildFormPrefill,
   usableCandidates,
   indexSeries,
+  applyRecommended,
   loadPrefs,
 } from './budgetSuggestions.js';
 
@@ -82,4 +83,34 @@ test('series is indexed by month', () => {
 
 test('broken stored preferences give an empty object', () => {
   assert.deepEqual(loadPrefs({ getItem: () => '{not json' }), {});
+});
+
+test('applyRecommended: monthly rows are keyed by their period text', () => {
+  const rows = [{ period: '2027-01-01', date: new Date('2027-01-01') }];
+  applyRecommended(rows, 'month', [], new Map([['2027-01', -5]]));
+  assert.equal(rows[0].recommended, -5);
+});
+
+test('applyRecommended: a partly covered quarter uses budget + forecast for the rest', () => {
+  const rows = [
+    { period: '2027 Q1', date: new Date(2027, 0, 1) },
+    { period: '2027 Q2', date: new Date(2027, 3, 1) },
+  ];
+  const raw = ['2027-01', '2027-02', '2027-03'].map((m) => ({
+    period: m + '-01',
+    budget: -10,
+    forecast: -5,
+  }));
+  // series starts in February
+  applyRecommended(
+    rows,
+    'quarter',
+    raw,
+    new Map([
+      ['2027-02', -20],
+      ['2027-03', -20],
+    ]),
+  );
+  assert.equal(rows[0].recommended, -15 + -20 + -20);
+  assert.equal(rows[1].recommended, undefined);
 });

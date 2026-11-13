@@ -58,3 +58,25 @@ it('renders the toggle, disabled with a note when the parent has it off', functi
         ->assertOk()
         ->assertSee('Excluded via parent category');
 });
+
+it('keeps the default (on) when the API creates a category without the flag', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson(route('api.v1.categories.store'), ['name' => 'Fuel', 'default_aggregation' => 'month', 'active' => true])
+        ->assertCreated();
+
+    expect($user->categories()->where('name', 'Fuel')->firstOrFail()->calculate_budget_suggestions)->toBeTrue();
+});
+
+it('disables the checkbox under an off parent and keeps the child\'s own value in the hidden input', function () {
+    $user = User::factory()->create();
+    $parent = Category::factory()->for($user)->create(['calculate_budget_suggestions' => false]);
+    $child = Category::factory()->for($user)->create(['parent_id' => $parent->id, 'calculate_budget_suggestions' => true]);
+
+    $html = $this->actingAs($user)->get(route('categories.edit', $child))->getContent();
+
+    expect($html)
+        ->toMatch('/<input type="hidden" name="calculate_budget_suggestions" value="1">/')
+        ->toMatch('/id="calculate_budget_suggestions"[^>]*disabled/s');
+});

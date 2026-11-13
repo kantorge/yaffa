@@ -107,14 +107,11 @@
               </button>
               <div>
                 <span class="text-muted">{{
-                  money(
-                    unit.suggestion.current_amount,
-                    unit.suggestion.currency,
-                  )
+                  money(shown(unit).current_amount, shown(unit).currency)
                 }}</span>
                 <i class="fa fa-arrow-right mx-1"></i>
                 <strong>{{
-                  money(pickedAmount(unit), unit.suggestion.currency)
+                  money(shown(unit).suggested_amount, shown(unit).currency)
                 }}</strong>
                 <span class="text-muted small">
                   {{
@@ -345,13 +342,15 @@
           });
       },
 
-      // Fetches only the recommended series for one category (the list stays as it is), so the
-      // chart can draw it after the user picks a recommendation.
-      loadSeries(categoryId) {
+      // Fetches only the recommended series (the list stays as it is), so the chart can draw it
+      // after the user picks a recommendation. It uses the ids the chart loads: the tree has
+      // just been set to the clicked category, and checking a parent also checks its children.
+      loadSeries() {
+        const categoryIds = this.getSelectedCategoryIds();
         return window.axios
           .get(window.route('api.v1.reports.budget-suggestions'), {
             params: {
-              category_ids: [categoryId],
+              category_ids: categoryIds,
               data_through: this.result?.run.data_through,
               sensitivity: this.sensitivity,
               bias: this.bias,
@@ -359,10 +358,7 @@
             timeout: 60000,
           })
           .then(({ data }) => {
-            this.$emit('result', {
-              series: data.series,
-              categoryIds: [String(categoryId)],
-            });
+            this.$emit('result', { series: data.series, categoryIds });
           })
           .catch(() => {
             // The chart still works without the recommended line
@@ -384,18 +380,17 @@
         );
       },
 
-      pickedAmount(unit) {
-        return (
-          this.pickedCandidate(unit)?.suggested_amount ??
-          unit.suggestion.suggested_amount
-        );
+      // Amounts and currency shown for a unit: the picked candidate's own, or the
+      // suggestion's for a new budget
+      shown(unit) {
+        return this.pickedCandidate(unit) || unit.suggestion;
       },
 
       apply(unit) {
         const candidate = this.pickedCandidate(unit);
         const baseId = window.YAFFA.userSettings.baseCurrency?.id;
         const precision =
-          unit.suggestion.currency?.id === baseId
+          this.shown(unit).currency?.id === baseId
             ? (window.YAFFA.userSettings.baseCurrency
                 ?.generic_decimal_precision ?? 2)
             : 2;
@@ -406,12 +401,19 @@
         });
       },
 
-      // Called by the page after the form saved a budget
-      markApplied() {
-        if (this.applying) {
-          this.hide(this.applying);
-          this.applying = null;
+      // Called by the page after the form saved a budget of the given category. True when it
+      // was the budget of the recommendation being applied (a cancelled form leaves
+      // `applying` set, so an unrelated save must not match).
+      markApplied(categoryId) {
+        if (
+          !this.applying ||
+          this.applying.category_id !== Number(categoryId)
+        ) {
+          return false;
         }
+        this.hide(this.applying);
+        this.applying = null;
+        return true;
       },
 
       hide(unit) {

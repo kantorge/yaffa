@@ -18,6 +18,10 @@ export function computeMovingAverage(baseData, interval, now = new Date()) {
   const size = WINDOW_PERIODS[interval] || WINDOW_PERIODS.month;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+  // The detector counts history from the first period with an actual, so leading empty
+  // periods (a chart range that starts at a budget start) must not dilute the average.
+  const firstActual = baseData.findIndex((row) => row.actual);
+
   return baseData.map((item, index) => {
     const periodEnd = new Date(
       item.date.getFullYear(),
@@ -32,7 +36,14 @@ export function computeMovingAverage(baseData, interval, now = new Date()) {
       return item;
     }
 
-    const window = baseData.slice(Math.max(0, index - size + 1), index + 1);
+    if (firstActual === -1 || index < firstActual) {
+      return item;
+    }
+
+    const window = baseData.slice(
+      Math.max(firstActual, index - size + 1),
+      index + 1,
+    );
     item.movingAverage =
       window.reduce((sum, row) => sum + (row.actual || 0), 0) / window.length;
 

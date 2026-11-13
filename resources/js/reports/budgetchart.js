@@ -33,7 +33,7 @@ import BudgetForm from '@/reports/components/BudgetForm.vue';
 import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
 import BudgetSuggestions from '@/reports/components/BudgetSuggestions.vue';
 import { computeMovingAverage } from '@/reports/movingAverage';
-import { indexSeries } from '@/reports/budgetSuggestions';
+import { applyRecommended, indexSeries } from '@/reports/budgetSuggestions';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 // Category tree
@@ -342,41 +342,6 @@ let loadedCategoryKey = '';
 
 const categoryKey = (ids) => ids.map(String).sort().join(',');
 
-// Adds `recommended` to the (already aggregated) chart rows. A period that is only partly
-// covered by the series (it starts at the first effective date) takes the plain expectation
-// (budget + forecast) for its other months.
-function addRecommended(data, aggregation) {
-  if (!recommended || recommended.key !== loadedCategoryKey) {
-    return;
-  }
-
-  const monthsPerRow = { month: 1, quarter: 3, year: 12 }[aggregation];
-  const expectedByMonth = new Map(
-    rawData.map((item) => [
-      item.period.slice(0, 7),
-      (item.budget || 0) + (item.forecast || 0),
-    ]),
-  );
-
-  data.forEach((row) => {
-    let total = 0;
-    let covered = false;
-    for (let i = 0; i < monthsPerRow; i++) {
-      const d = new Date(row.date.getFullYear(), row.date.getMonth() + i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (recommended.byMonth.has(key)) {
-        covered = true;
-        total += recommended.byMonth.get(key);
-      } else {
-        total += expectedByMonth.get(key) || 0;
-      }
-    }
-    if (covered) {
-      row.recommended = total;
-    }
-  });
-}
-
 // Warns the user when the currently displayed chart no longer reflects the active filters
 // (category/account/account-scope changed after the last successful load, without reloading).
 const staleDataWarning = document.getElementById('stale-data-warning');
@@ -666,7 +631,9 @@ function updateChart(rawData) {
 
   // Add moving average (knowing that data is ordered)
   data = computeMovingAverage(data, aggregation);
-  addRecommended(data, aggregation);
+  if (recommended && recommended.key === loadedCategoryKey) {
+    applyRecommended(data, aggregation, rawData, recommended.byMonth);
+  }
 
   // Update the chart settings
   chart.data = data;
@@ -715,10 +682,9 @@ const budgetFormApp = createApp({
           }
         });
     },
-    onBudgetSaved() {
+    onBudgetSaved(budget) {
       toastHelpers.showSuccessToast(__('Budget saved'));
-      suggestionsPanel.markApplied();
-      recommended = null; // stale once a budget changed
+      dropAppliedSuggestion(budget);
       // A Budget's own amount/period/account feeds directly into the chart's aggregate
       // totals, so only a full reload (not a local row patch) keeps both the chart and
       // this breakdown table correct.
@@ -726,6 +692,7 @@ const budgetFormApp = createApp({
     },
     onNewBudgetSaved(budget) {
       const selectedCategoryIds = getSelectedCategoryIds();
+      dropAppliedSuggestion(budget);
 
       // A budget created for a category outside the current selection wouldn't show up in
       // this chart anyway - warn instead of silently reloading data that won't change.
@@ -742,14 +709,22 @@ const budgetFormApp = createApp({
       }
 
       toastHelpers.showSuccessToast(__('Budget saved'));
-      suggestionsPanel.markApplied();
-      recommended = null; // stale once a budget changed
-      reloadData();
+      if (selectedCategoryIds.length > 0) {
+        reloadData();
+      }
     },
   },
 });
 installRouteGlobal(budgetFormApp);
 const budgetForm = budgetFormApp.mount('#budgetChartFormApp');
+
+// Once the budget of the recommendation being applied is saved, the recommendation is done and
+// the recommended line (which assumed it unapplied) is stale.
+function dropAppliedSuggestion(budget) {
+  if (suggestionsPanel.markApplied(budget?.category_id)) {
+    recommended = null;
+  }
+}
 
 // Budget check panel (its own Vue island above the chart)
 const suggestionsApp = createApp(BudgetSuggestions, {
@@ -772,7 +747,7 @@ const suggestionsApp = createApp(BudgetSuggestions, {
     $(treeSelector).jstree('check_node', String(categoryId));
     rebuildUrl();
     reloadData();
-    suggestionsPanel.loadSeries(categoryId);
+    suggestionsPanel.loadSeries();
   },
   onApply: ({ budgetId, prefill }) => {
     if (budgetId !== null) {

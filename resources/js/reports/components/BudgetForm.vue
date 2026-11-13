@@ -289,6 +289,8 @@
           this.loadBudgetData(budgetId, prefill);
         } else if (prefill) {
           this.applyPrefill(prefill);
+          // The prefilled values are the clean baseline, like for a loaded budget
+          this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
         }
 
         this.$refs.formModal.show();

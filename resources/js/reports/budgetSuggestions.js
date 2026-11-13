@@ -77,6 +77,55 @@ export function indexSeries(series) {
   return map;
 }
 
+/**
+ * Adds `recommended` to the already aggregated chart rows (month/quarter/year). A period only
+ * partly covered by the series (it starts at the first effective date) takes the plain
+ * expectation (budget + forecast) for its other months. Rows the series does not touch get no
+ * value.
+ *
+ * @param {Array} data Aggregated rows ({date, period})
+ * @param {'month'|'quarter'|'year'} aggregation
+ * @param {Array} rawData Monthly chart rows ({period: 'YYYY-MM-DD', budget, forecast})
+ * @param {Map<string, number>} byMonth From indexSeries()
+ */
+export function applyRecommended(data, aggregation, rawData, byMonth) {
+  const monthsPerRow = { month: 1, quarter: 3, year: 12 }[aggregation] || 1;
+  const monthKey = (year, monthIndex) => {
+    const d = new Date(year, monthIndex, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const expectedByMonth = new Map(
+    rawData.map((item) => [
+      item.period.slice(0, 7),
+      (item.budget || 0) + (item.forecast || 0),
+    ]),
+  );
+
+  data.forEach((row) => {
+    // Monthly rows are keyed by their period text: their Date is parsed as UTC midnight, which
+    // is the previous month in a negative UTC offset. Quarter/year dates are built locally.
+    const keys =
+      aggregation === 'month'
+        ? [row.period.slice(0, 7)]
+        : Array.from({ length: monthsPerRow }, (_, i) =>
+            monthKey(row.date.getFullYear(), row.date.getMonth() + i),
+          );
+    let total = 0;
+    let covered = false;
+    keys.forEach((key) => {
+      if (byMonth.has(key)) {
+        covered = true;
+        total += byMonth.get(key);
+      } else {
+        total += expectedByMonth.get(key) || 0;
+      }
+    });
+    if (covered) {
+      row.recommended = total;
+    }
+  });
+}
+
 export function loadPrefs(storage = globalThis.localStorage) {
   try {
     return JSON.parse(storage.getItem(PREFS_KEY)) || {};
