@@ -68,6 +68,8 @@ const routeMap = new Map([
   ['register', 'auth/register'],
   ['login', 'auth/login'],
   ['tags.index', 'tags/index'],
+  ['reports.recharges.untagged', 'recharges/index'],
+  ['reports.recharges.open', 'recharges/index'],
   ['transaction-templates.index', 'transaction-templates/index'],
   ['user.settings', 'user/settings'],
   ['user.ai-settings', 'user/settings'],

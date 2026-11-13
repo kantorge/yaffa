@@ -47,6 +47,16 @@ class UserRequest extends FormRequest
                 'required',
                 'boolean',
             ],
+            // Optional, so clients that do not know these settings keep working
+            'recharge_tags_enabled' => [
+                'sometimes',
+                'boolean',
+            ],
+            'recharge_backstop_date' => [
+                'sometimes',
+                'nullable',
+                'date',
+            ],
         ];
     }
 }

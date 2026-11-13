@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CategoryTagRequirement;
 use App\Http\Traits\ModelOwnedByUserTrait;
 use App\Observers\CategoryObserver;
 use Carbon\Carbon;
@@ -52,6 +53,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static Builder|Category whereUpdatedAt($value)
  * @method static Builder|Category whereUserId($value)
  * @property string $default_aggregation
+ * @property CategoryTagRequirement $tag_requirement
  * @property-read Collection<int, Category> $children
  * @property-read int|null $children_count
  * @property-read Collection<int, AccountEntity> $payeesDefaulting
@@ -64,7 +66,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
-#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation')]
+#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation', 'tag_requirement')]
 #[Appends('full_name')]
 #[ObservedBy([CategoryObserver::class])]
 class Category extends Model
@@ -72,10 +74,15 @@ class Category extends Model
     use HasFactory;
     use ModelOwnedByUserTrait;
 
+    protected $attributes = [
+        'tag_requirement' => 'none',
+    ];
+
     protected function casts(): array
     {
         return [
             'active' => 'boolean',
+            'tag_requirement' => CategoryTagRequirement::class,
         ];
     }
 

@@ -71,3 +71,26 @@ export async function upsertEntity(kind, row) {
     data[kind][index] = { ...data[kind][index], ...row };
   }
 }
+
+/**
+ * Ids of the categories whose items expect a tag (e.g. a claim number on a recharge).
+ * Resolves with an empty set when recharge tags are disabled in the user settings, or when the data
+ * cannot be loaded: the check is only a reminder.
+ */
+export async function loadTagRequiredCategoryIds() {
+  if (!window.YAFFA?.userSettings?.recharge_tags_enabled) {
+    return new Set();
+  }
+
+  try {
+    const data = await loadSelectData();
+
+    return new Set(
+      data.categories
+        .filter((c) => c.tag_requirement && c.tag_requirement !== 'none')
+        .map((c) => c.id),
+    );
+  } catch {
+    return new Set();
+  }
+}

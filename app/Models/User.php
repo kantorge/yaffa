@@ -41,6 +41,8 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @property Carbon $end_date
  * @property string $account_details_date_range
  * @property bool $auto_merge_standard_transaction_items
+ * @property bool $recharge_tags_enabled
+ * @property Carbon|null $recharge_backstop_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, AccountGroup> $accountGroups
@@ -105,7 +107,7 @@ use Spatie\Onboard\Concerns\Onboardable;
  * @method static Builder<static>|User whereAccountDetailsDateRange($value)
  * @mixin \Eloquent
  */
-#[Fillable('name', 'email', 'password', 'language', 'locale', 'start_date', 'end_date', 'account_details_date_range', 'auto_merge_standard_transaction_items')]
+#[Fillable('name', 'email', 'password', 'language', 'locale', 'start_date', 'end_date', 'account_details_date_range', 'auto_merge_standard_transaction_items', 'recharge_tags_enabled', 'recharge_backstop_date')]
 #[Hidden('password', 'remember_token')]
 class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoFactorAuthenticatable
 {
@@ -128,6 +130,8 @@ class User extends Authenticatable implements MustVerifyEmail, Onboardable, TwoF
             'start_date' => 'datetime',
             'end_date' => 'datetime',
             'auto_merge_standard_transaction_items' => 'boolean',
+            'recharge_tags_enabled' => 'boolean',
+            'recharge_backstop_date' => 'date',
         ];
     }
 
