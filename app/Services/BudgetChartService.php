@@ -394,9 +394,12 @@ class BudgetChartService
      *
      * @return array{
      *     categories: array<int, array<string, array{actual: BigDecimal|null, budget: BigDecimal, forecast: BigDecimal}>>,
-     *     missingRateCurrencyIds: array<int, int>
+     *     missingRateCurrencyIds: array<int, int>,
+     *     missingRatePeriods: array<int, array<string, true>>
      * } Categories are keyed by id, then by period (Y-m-01). 'actual' is null where the
-     *     category has no standard transaction in the period, as in chart().
+     *     category has no standard transaction in the period, as in chart(). 'missingRatePeriods'
+     *     lists, per category, the periods (Y-m-01) whose amounts fell back to a 1:1 rate because the
+     *     currency has no rates at all.
      */
     public function aggregateByCategory(User $user): array
     {
@@ -483,6 +486,7 @@ class BudgetChartService
         // Convert to base currency at each period's monthly rate, as chart() does.
         $categories = [];
         $missing = [];
+        $missingPeriods = [];
         // Rate lookups scan the rates map and parse dates, so resolve each currency/month once.
         $rateCache = [];
         foreach ($compact as $series => $byCategory) {
@@ -494,6 +498,7 @@ class BudgetChartService
                             : ($rateCache["{$currencyId}|{$period}"] = $this->getLatestRateFromMap($currencyId, Carbon::parse($period), $allRatesMap, $baseCurrencyId));
                         if ($rate === null && $currencyId !== $baseCurrencyId) {
                             $missing[$currencyId] = $currencyId;
+                            $missingPeriods[$categoryId][$period] = true;
                         }
 
                         $categories[$categoryId][$period] ??= ['actual' => null, 'budget' => BigDecimal::zero(), 'forecast' => BigDecimal::zero()];
@@ -508,7 +513,7 @@ class BudgetChartService
             ksort($byPeriod);
         }
 
-        return ['categories' => $categories, 'missingRateCurrencyIds' => array_values($missing)];
+        return ['categories' => $categories, 'missingRateCurrencyIds' => array_values($missing), 'missingRatePeriods' => $missingPeriods];
     }
 
     /**
