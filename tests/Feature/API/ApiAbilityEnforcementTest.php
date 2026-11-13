@@ -68,6 +68,7 @@ class ApiAbilityEnforcementTest extends TestCase
             'budgets.index' => ['api.v1.budgets.index', 'get', 'read', []],
             'budgets.show' => ['api.v1.budgets.show', 'get', 'read', ['budget' => 1]],
             'reports.budget-chart' => ['api.v1.reports.budget-chart', 'get', 'read', []],
+            'reports.budget-suggestions' => ['api.v1.reports.budget-suggestions', 'get', 'read', []],
             'transactions.scheduled-items' => ['api.v1.transactions.scheduled-items', 'get', 'read', []],
             'transactions.duplicate-check' => ['api.v1.transactions.duplicate-check', 'post', 'read', []],
             'transaction-templates.index' => ['api.v1.transaction-templates.index', 'get', 'read', []],
