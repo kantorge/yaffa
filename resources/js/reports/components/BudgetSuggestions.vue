@@ -228,10 +228,13 @@
                       </template>
                     </dl>
                     <div v-if="candidatesOf(unit).length > 1" class="mb-2">
-                      <label class="form-label small mb-0">{{
-                        __('Budget row to replace')
-                      }}</label>
+                      <label
+                        class="form-label small mb-0"
+                        :for="`budgetRowToReplace${unit.category_id}`"
+                        >{{ __('Budget row to replace') }}</label
+                      >
                       <select
+                        :id="`budgetRowToReplace${unit.category_id}`"
                         v-model="picked[unit.suggestion.key]"
                         class="form-select form-select-sm"
                       >
