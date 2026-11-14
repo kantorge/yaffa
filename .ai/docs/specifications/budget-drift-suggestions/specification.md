@@ -1,6 +1,6 @@
 # Budget drift suggestions — specification (MVP)
 
-This file is the source of truth for the build. Agents record any deviation in the "Decisions log" at the end, with the reason, instead of silently diverging. The build process is described in `.ai/docs/specifications/budget-drift-suggestions/build-workflow.md`.
+This is the pre-implementation design and the decisions log of the build. The feature is built; the as-built docs are in `.ai/docs/features/budget-drift-suggestions/` and win where they differ. The per-phase plans, handoffs and the build workflow were merged into those docs and removed.
 
 ## Context and goal
 
@@ -514,7 +514,7 @@ Append one line per decision or deviation made during the build: date, phase, de
 | 2026-11-13 | 2a     | The recommended series reuses the old row's rrule for a `replace` (a `COUNT` would restart at the effective date) and is `null` for "Review all" | Counted rules are rare; the series is only returned for named categories |
 | 2026-11-13 | 2b     | `category_ids` must exist and belong to the user (422 otherwise); exactly one of `category_ids` or `all=1` is required | Spec names the parameters only; ownership check avoids returning data shape for foreign ids |
 | 2026-11-13 | 2b     | Backtest counts every month with a `suggestion` verdict per category per calendar year, without deduplicating by `key`; more than 2 in a year is flagged | Repeats are the instability the tuning must expose |
-| 2026-11-13 | 2b     | Full "Review all" run measured on the dev data: under the 5 s target, cold cache close; queued fallback stays in the backlog | Under the 5 s target on one dev user; the cold margin is small, so re-measure on a larger dataset; see phase-2b-handoff.md |
+| 2026-11-13 | 2b     | Full "Review all" run measured on the dev data: under the 5 s target, cold cache close; queued fallback stays in the backlog | Under the 5 s target on one dev user; the cold margin is small, so re-measure on a larger dataset; see the feature docs |
 | 2026-11-13 | 2b     | The backtest only counts suggestions per category per year; it does not compare them with the actuals that followed | Spec asked for both; the comparison is left to the owner's manual check during tuning |
 | 2026-11-13 | 2b     | A user without any currency gets a 422 (endpoint) or an error (command) | The service throws; found in review |
 | 2026-11-13 | 3      | Column renamed `budget_suggestions_excluded` (default false) to `calculate_budget_suggestions` (default true), 2a migration edited in place | "Excluded" was not intuitive on the category form (owner); the column only existed in the dev database, which was rolled back and migrated again. The `excluded` verdict name is unchanged |
