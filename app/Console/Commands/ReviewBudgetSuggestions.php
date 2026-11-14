@@ -7,17 +7,12 @@ use App\Services\BudgetSuggestionService;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 
-#[Signature('budget-suggestions:review {user : User ID} {--through= : Data-through month (Y-m)} {--sensitivity= : low|medium|high} {--bias= : neutral|conservative|conservative_rounded} {--json : Print the service result as JSON} {--backtest : Re-run for each of the last 24 months and count suggestions per category per year}')]
+#[Signature('budget-suggestions:review {user : User ID} {--through= : Data-through month (Y-m)} {--sensitivity= : low|medium|high} {--bias= : neutral|conservative|conservative_rounded} {--json : Print the service result as JSON}')]
 #[Description('Review all budgets of a user against recent actuals (the same result as the budget-suggestions API endpoint)')]
 class ReviewBudgetSuggestions extends Command
 {
-    private const BACKTEST_MONTHS = 24;
-
-    private const BACKTEST_MAX_PER_YEAR = 2;
-
     public function handle(BudgetSuggestionService $service): int
     {
         $user = User::query()->find((int) $this->argument('user'));
@@ -47,16 +42,8 @@ class ReviewBudgetSuggestions extends Command
             return Command::FAILURE;
         }
 
-        if ($this->option('backtest') && $through !== null) {
-            $this->error('--through cannot be combined with --backtest (it runs the last 24 complete months)');
-
-            return Command::FAILURE;
-        }
-
         try {
-            return $this->option('backtest')
-                ? $this->backtest($service, $user, $sensitivity, $bias)
-                : $this->review($service, $user, $through, $sensitivity, $bias);
+            return $this->review($service, $user, $through, $sensitivity, $bias);
         } catch (InvalidArgumentException $e) {
             $this->error($e->getMessage());
 
@@ -97,61 +84,6 @@ class ReviewBudgetSuggestions extends Command
         $this->info("Data through {$result['run']['data_through']}, sensitivity {$result['run']['sensitivity']}, bias {$result['run']['bias']}.");
         $this->info($counts);
         $this->info(sprintf('Elapsed: %.2f s', $elapsed));
-
-        return Command::SUCCESS;
-    }
-
-    private function backtest(BudgetSuggestionService $service, User $user, ?string $sensitivity, ?string $bias): int
-    {
-        $lastComplete = Carbon::now()->startOfMonth()->subMonth();
-        $names = [];
-        $counts = []; // category id => year => suggestions
-
-        for ($i = self::BACKTEST_MONTHS - 1; $i >= 0; $i--) {
-            $month = $lastComplete->copy()->subMonths($i);
-            $result = $service->run($user, null, $month->format('Y-m'), $sensitivity, $bias);
-
-            foreach ($result['units'] as $unit) {
-                $names[$unit['category_id']] = $unit['category_name'];
-                if ($unit['verdict'] === 'suggestion') {
-                    $counts[$unit['category_id']][$month->year] = ($counts[$unit['category_id']][$month->year] ?? 0) + 1;
-                }
-            }
-        }
-
-        $rows = [];
-        foreach ($counts as $categoryId => $perYear) {
-            ksort($perYear);
-            $rows[] = [
-                'category_id' => $categoryId,
-                'category_name' => $names[$categoryId],
-                'suggestions_per_year' => $perYear,
-                'flagged' => max($perYear) > self::BACKTEST_MAX_PER_YEAR,
-            ];
-        }
-        usort($rows, fn ($a, $b) => max($b['suggestions_per_year']) <=> max($a['suggestions_per_year']));
-
-        if ($this->option('json')) {
-            $this->line(json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-            return Command::SUCCESS;
-        }
-
-        $this->table(
-            ['Category', 'Suggestions per year', 'Flagged'],
-            array_map(fn ($r) => [
-                $r['category_name'],
-                collect($r['suggestions_per_year'])->map(fn ($n, $y) => "{$y}: {$n}")->implode(', '),
-                $r['flagged'] ? 'yes' : '',
-            ], $rows)
-        );
-        $this->info(sprintf(
-            '%d categories got a suggestion in the last %d months; %d flagged (more than %d in a year).',
-            count($rows),
-            self::BACKTEST_MONTHS,
-            count(array_filter($rows, fn ($r) => $r['flagged'])),
-            self::BACKTEST_MAX_PER_YEAR
-        ));
 
         return Command::SUCCESS;
     }
