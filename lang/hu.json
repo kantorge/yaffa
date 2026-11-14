@@ -1885,11 +1885,9 @@
     "Pick the month your data is complete through, then check the selected categories or review all of them. Nothing is changed until you create a budget period.": "Válaszd ki azt a hónapot, ameddig az adataid teljesek, majd ellenőrizd a kijelölt kategóriákat, vagy tekintsd át az összeset. Semmi sem változik, amíg nem hozol létre új költségvetési időszakot.",
     "No budget changes are recommended.": "Nincs javasolt költségvetés-módosítás.",
     "Show this category on the chart": "Kategória megjelenítése a grafikonon",
-    "from :date": ":date-tól",
     "Recent level": "Friss szint",
     "Expected": "Várható",
     "per :period": ":period alapon",
-    "New budget, suggested cadence: :cadence": "Új költségvetés, javasolt gyakoriság: :cadence",
     "Differs from the category's default aggregation, which is not changed.": "Eltér a kategória alapértelmezett összesítésétől, amely nem változik.",
     "Budget row to replace": "Lecserélendő költségvetési sor",
     "Create new budget period": "Új költségvetési időszak létrehozása",
@@ -1922,5 +1920,6 @@
     "Every :n weeks": ":n hetente",
     "Every :n months": ":n havonta",
     "Every :n years": ":n évente",
-    "until :date": ":date-ig"
+    "until :date": ":date-ig",
+    "Toggle button group for row type filtering": "Kapcsológomb-csoport a sortípus szerinti szűréshez"
 }

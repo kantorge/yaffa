@@ -1885,11 +1885,9 @@
     "Pick the month your data is complete through, then check the selected categories or review all of them. Nothing is changed until you create a budget period.": "Choisissez le mois jusqu'auquel vos données sont complètes, puis vérifiez les catégories sélectionnées ou examinez-les toutes. Rien n'est modifié tant que vous ne créez pas de période budgétaire.",
     "No budget changes are recommended.": "Aucune modification du budget n'est recommandée.",
     "Show this category on the chart": "Afficher cette catégorie sur le graphique",
-    "from :date": "à partir du :date",
     "Recent level": "Niveau récent",
     "Expected": "Attendu",
     "per :period": "par :period",
-    "New budget, suggested cadence: :cadence": "Nouveau budget, périodicité suggérée : :cadence",
     "Differs from the category's default aggregation, which is not changed.": "Diffère de l'agrégation par défaut de la catégorie, qui n'est pas modifiée.",
     "Budget row to replace": "Ligne de budget à remplacer",
     "Create new budget period": "Créer une nouvelle période budgétaire",
@@ -1922,5 +1920,6 @@
     "Every :n weeks": "Toutes les :n semaines",
     "Every :n months": "Tous les :n mois",
     "Every :n years": "Tous les :n ans",
-    "until :date": "jusqu'au :date"
+    "until :date": "jusqu'au :date",
+    "Toggle button group for row type filtering": "Groupe de boutons bascule pour le filtrage par type de ligne"
 }
