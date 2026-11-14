@@ -661,6 +661,8 @@ function updateChart(rawData) {
 
   // Add moving average (knowing that data is ordered)
   data = computeMovingAverage(data, aggregation);
+  // Month rows are shared with rawData: drop values of an earlier recommendation
+  data.forEach((row) => delete row.recommended);
   if (showsRecommended()) {
     applyRecommended(data, aggregation, rawData, recommended.byMonth);
   }

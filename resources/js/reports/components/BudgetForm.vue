@@ -266,6 +266,8 @@
     },
 
     mounted() {
+      // Blank new-budget state, so a prefill's baseline never leaks into later forms
+      this.blankData = JSON.parse(JSON.stringify(this.form.data()));
       this.initializeCategorySelect();
       this.initializeAccountSelect();
     },
@@ -519,6 +521,9 @@
       },
 
       resetForm() {
+        if (this.blankData) {
+          this.form.originalData = JSON.parse(JSON.stringify(this.blankData));
+        }
         this.form.reset();
         this.form.errors.clear();
 

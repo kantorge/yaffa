@@ -845,9 +845,8 @@ class BudgetSuggestionService
                 ]))->effectiveRrule();
             }
 
-            // A replacement keeps the old row's recurrence phase and count; a new row starts at the effective date
-            $anchor = $proposal['type'] === 'replace' ? $old->start_date : $effective;
-            $occurrences = $this->recurrenceRuleService->getRecurrenceBetween($anchor, $rrule, $effective, $to);
+            // Both a replacement and a new row start at the effective date, as the form saves them
+            $occurrences = $this->recurrenceRuleService->getRecurrenceBetween($effective, $rrule, $effective, $to);
             foreach ($occurrences as $occurrence) {
                 $date = Carbon::instance($occurrence->getStart());
                 $this->addDelta($delta, $date, $proposal['amount'] * $this->inflationCalculator->applyAnnualRate(1.0, $inflation, $effective, $date), $currency->id, $c);

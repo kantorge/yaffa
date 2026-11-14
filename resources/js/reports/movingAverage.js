@@ -20,7 +20,9 @@ export function computeMovingAverage(baseData, interval, now = new Date()) {
 
   // The detector counts history from the first period with an actual, so leading empty
   // periods (a chart range that starts at a budget start) must not dilute the average.
-  const firstActual = baseData.findIndex((row) => row.actual);
+  const firstActual = baseData.findIndex(
+    (row) => row.actual !== null && row.actual !== undefined,
+  );
 
   return baseData.map((item, index) => {
     const periodEnd = new Date(

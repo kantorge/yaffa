@@ -13,7 +13,6 @@ use App\Models\User;
 use Brick\Math\BigDecimal;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Budget vs actual vs forecast data, shared by the budget report endpoint and the budget
@@ -411,7 +410,7 @@ class BudgetChartService
         $compact = ['actual' => [], 'budget' => [], 'forecast' => []];
 
         // Actuals: one grouped query. Signed like chart(): withdrawals negative, others positive.
-        $rows = DB::table('transaction_items')
+        $rows = TransactionItem::query()
             ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
             ->where('transactions.user_id', $user->id)
             ->where('transactions.schedule', false)
@@ -422,6 +421,7 @@ class BudgetChartService
                 "transaction_items.category_id, DATE_FORMAT(transactions.date, '%Y-%m-01') AS period, "
                 . 'transactions.currency_id, transactions.transaction_type, SUM(transaction_items.amount) AS total'
             )
+            ->toBase()
             ->get();
 
         foreach ($rows as $row) {

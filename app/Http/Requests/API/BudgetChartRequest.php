@@ -18,10 +18,10 @@ class BudgetChartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'categories' => ['nullable', 'array'],
+            'categories' => ['sometimes', 'array'],
             'categories.*' => ['integer'],
             'accountSelection' => ['nullable', 'string', Rule::in(['any', 'selected', 'none'])],
-            'accountEntity' => ['nullable', 'integer'],
+            'accountEntity' => ['nullable', 'integer', 'required_if:accountSelection,selected'],
         ];
     }
 }

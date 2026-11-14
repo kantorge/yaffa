@@ -46,8 +46,17 @@ test('quarter window is 4 quarters and the open quarter is excluded', () => {
 });
 
 test('history counts from the first actual, so leading empty rows do not dilute it', () => {
-  const rows = months([0, 0, 0, 10, 20]);
+  const rows = months([null, null, null, 10, 20]);
   const out = computeMovingAverage(rows, 'month', new Date(2025, 8, 1));
   assert.equal(out[4].movingAverage, 15);
   assert.equal(out[1].movingAverage, undefined);
+});
+
+test('a leading zero actual counts as history', () => {
+  const out = computeMovingAverage(
+    months([0, 30]),
+    'month',
+    new Date(2026, 5, 1),
+  );
+  assert.equal(out[1].movingAverage, 15);
 });

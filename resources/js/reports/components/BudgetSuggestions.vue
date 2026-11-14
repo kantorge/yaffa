@@ -394,6 +394,10 @@
         sensitivity: prefs.sensitivity || 'medium',
         bias: prefs.bias || 'neutral',
         loading: false,
+        // Bumped when a run or series request starts, so an older response is ignored
+        generation: 0,
+        // Mode and ids of the displayed run, reused to refresh it
+        lastRun: null,
         error: null,
         result: null,
         hidden: [],
@@ -435,13 +439,13 @@
     },
 
     methods: {
-      run(mode) {
+      run(mode, ids = null) {
         const params = {
           data_through: this.dataThrough,
           sensitivity: this.sensitivity,
           bias: this.bias,
         };
-        const categoryIds = this.getSelectedCategoryIds();
+        const categoryIds = ids ?? this.getSelectedCategoryIds();
         if (mode === 'all') {
           params.all = 1;
         } else if (categoryIds.length === 0) {
@@ -456,6 +460,8 @@
         savePrefs({ sensitivity: this.sensitivity, bias: this.bias });
         this.loading = true;
         this.error = null;
+        this.generation++;
+        this.lastRun = { mode, ids: mode === 'all' ? null : categoryIds };
 
         return window.axios
           .get(window.route('api.v1.reports.budget-suggestions'), {
@@ -502,6 +508,7 @@
       // just been set to the clicked category, and checking a parent also checks its children.
       loadSeries() {
         const categoryIds = this.getSelectedCategoryIds();
+        const generation = ++this.generation;
         return window.axios
           .get(window.route('api.v1.reports.budget-suggestions'), {
             params: {
@@ -513,10 +520,15 @@
             timeout: 60000,
           })
           .then(({ data }) => {
-            this.$emit('result', { series: data.series, categoryIds });
+            if (generation === this.generation) {
+              this.$emit('result', { series: data.series, categoryIds });
+            }
           })
           .catch(() => {
             // The chart still works without the recommended line
+            if (generation !== this.generation) {
+              return;
+            }
             this.$emit('result', { series: null, categoryIds: null });
           });
       },
@@ -587,10 +599,10 @@
           )
           .then(() => {
             this.stopped.push(unit.category_id);
-            // The chart's cached recommended series still counts this category: recompute it
-            // (a run over all categories has no series to refresh)
-            if (this.result?.run.scope === 'selected') {
-              this.loadSeries();
+            // Descendants rolled into this unit are excluded too: rerun the check so the list
+            // and the chart's recommended series no longer count them
+            if (this.lastRun) {
+              this.run(this.lastRun.mode, this.lastRun.ids);
             }
             toastHelpers.showSuccessToast(
               __(
