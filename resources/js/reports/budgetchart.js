@@ -8,7 +8,10 @@ import am4themes_kelly from '@amcharts/amcharts4/themes/kelly';
 import 'datatables.net-bs5';
 
 // Generic helpers
-import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+import {
+  applyAmChartsLocalization,
+  AMCHARTS_NUMBER_FORMAT_DEFAULTS,
+} from '@/shared/lib/i18n/amcharts';
 import { __, getDataTablesLanguageOptions } from '@/shared/lib/i18n';
 import * as dataTableHelpers from '@/shared/lib/datatable';
 import {
@@ -159,7 +162,6 @@ let chart,
   dateAxis,
   seriesActual,
   seriesForecast,
-  seriesBudget,
   seriesExpected,
   seriesMovingAverage,
   seriesRecommended,
@@ -182,6 +184,7 @@ function initChart() {
 
   chart.numberFormatter.intlLocales = window.YAFFA.userSettings.locale;
   chart.numberFormatter.numberFormat = {
+    ...AMCHARTS_NUMBER_FORMAT_DEFAULTS,
     style: 'currency',
     currency: window.YAFFA.userSettings.baseCurrency.iso_code,
     minimumFractionDigits: 0,
@@ -212,8 +215,8 @@ function initChart() {
   // This is not used later, so it is not assigned to a variable
   chart.yAxes.push(new am4charts.ValueAxis());
 
-  // Consistent color pairing across the 4 series: "Actual" (fact) and "Moving average" share
-  // one color family (blue); "Forecast" and "Budget" - both plan/projection series - share
+  // Consistent color pairing: "Actual" (fact) and "Actual trend" share one color family
+  // (blue); "Scheduled" and "Budget + schedules" - both plan/projection series - share
   // another (purple), so the chart reads as two pairs rather than four unrelated colors.
   const colorActual = am4core.color('#2E86C1');
   const colorMovingAverage = am4core.color('#1B4F72');
@@ -237,14 +240,26 @@ function initChart() {
   seriesActual.tooltip.getFillFromObject = false;
   seriesActual.tooltip.background.fill = colorActual;
 
+  seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
+  seriesMovingAverage.strokeWidth = 3;
+  seriesMovingAverage.fill = colorMovingAverage;
+  seriesMovingAverage.stroke = colorMovingAverage;
+  seriesMovingAverage.dataFields.valueY = 'movingAverage';
+  seriesMovingAverage.dataFields.dateX = 'date';
+  seriesMovingAverage.name = __('Actual trend');
+  seriesMovingAverage.tooltipText =
+    '[bold]' + __('Actual trend') + ':[/] {valueY}';
+  seriesMovingAverage.tooltip.getFillFromObject = false;
+  seriesMovingAverage.tooltip.background.fill = colorMovingAverage;
+
   // The forecasted value of active scheduled transactions - stacked on top of "Actual" so the
   // two bars read as "so far + what's still expected this period." Lighter purple fill and a
   // dashed border distinguish it as a plan/forecast rather than recorded fact.
   seriesForecast = chart.series.push(new am4charts.ColumnSeries());
   seriesForecast.dataFields.valueY = 'forecast';
   seriesForecast.dataFields.dateX = 'date';
-  seriesForecast.name = __('Forecast');
-  seriesForecast.tooltipText = '[bold]' + __('Forecast') + ':[/] {valueY}';
+  seriesForecast.name = __('Scheduled');
+  seriesForecast.tooltipText = '[bold]' + __('Scheduled') + ':[/] {valueY}';
   seriesForecast.stacked = true;
   seriesForecast.fill = colorForecastFill;
   seriesForecast.stroke = colorForecastStroke;
@@ -255,22 +270,11 @@ function initChart() {
   seriesForecast.tooltip.getFillFromObject = false;
   seriesForecast.tooltip.background.fill = colorForecastStroke;
 
-  seriesBudget = chart.series.push(new am4charts.LineSeries());
-  seriesBudget.strokeWidth = 3;
-  seriesBudget.strokeDasharray = '8,4';
-  seriesBudget.fill = colorForecastStroke;
-  seriesBudget.stroke = colorForecastStroke;
-  seriesBudget.dataFields.valueY = 'budget';
-  seriesBudget.dataFields.dateX = 'date';
-  seriesBudget.name = __('Budget');
-  seriesBudget.tooltipText = '[bold]' + __('Budget') + ':[/] {valueY}';
-  seriesBudget.tooltip.getFillFromObject = false;
-  seriesBudget.tooltip.background.fill = colorForecastStroke;
-
   // Budgets and schedules add up: the forecast bars are not part of the budget but extend it,
   // so this line is the budget plus the schedules, i.e. the total expectation of the period.
   seriesExpected = chart.series.push(new am4charts.LineSeries());
   seriesExpected.strokeWidth = 3;
+  seriesExpected.strokeDasharray = '8,4';
   seriesExpected.fill = colorForecastStroke;
   seriesExpected.stroke = colorForecastStroke;
   seriesExpected.dataFields.valueY = 'expected';
@@ -282,7 +286,7 @@ function initChart() {
     ':[/] {valueY}\n' +
     __('Budget') +
     ': {budget}\n' +
-    __('Forecast') +
+    __('Scheduled') +
     ': {forecast}';
   seriesExpected.tooltip.getFillFromObject = false;
   seriesExpected.tooltip.background.fill = colorForecastStroke;
@@ -297,22 +301,12 @@ function initChart() {
   seriesRecommended.dataFields.valueY = 'recommended';
   seriesRecommended.dataFields.dateX = 'date';
   seriesRecommended.name = __('Recommended budget');
+  // Off until a recommendation is loaded (see updateChart)
+  seriesRecommended.hidden = true;
   seriesRecommended.tooltipText =
     '[bold]' + __('Recommended budget') + ':[/] {valueY}';
   seriesRecommended.tooltip.getFillFromObject = false;
   seriesRecommended.tooltip.background.fill = colorRecommended;
-
-  seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
-  seriesMovingAverage.strokeWidth = 3;
-  seriesMovingAverage.fill = colorMovingAverage;
-  seriesMovingAverage.stroke = colorMovingAverage;
-  seriesMovingAverage.dataFields.valueY = 'movingAverage';
-  seriesMovingAverage.dataFields.dateX = 'date';
-  seriesMovingAverage.name = __('Moving average');
-  seriesMovingAverage.tooltipText =
-    '[bold]' + __('Moving average') + ':[/] {valueY}';
-  seriesMovingAverage.tooltip.getFillFromObject = false;
-  seriesMovingAverage.tooltip.background.fill = colorMovingAverage;
 
   // Actual bars open the matching transactions in a new tab, forecast bars jump to the
   // scheduled transactions table
@@ -331,7 +325,7 @@ function initChart() {
   );
 
   scrollbarX = new am4charts.XYChartScrollbar();
-  scrollbarX.series.push(seriesBudget);
+  scrollbarX.series.push(seriesExpected);
   scrollbarX.series.push(seriesActual);
   scrollbarX.series.push(seriesForecast);
   scrollbarX.series.push(seriesMovingAverage);
@@ -696,7 +690,13 @@ function updateChart(rawData) {
   chart.data = data;
   chart.invalidateData();
   // Always show the whole range of the new data (the earlier zoom could hide the added months)
+  const hasRecommended = data.some((row) => row.recommended !== undefined);
   chart.events.once('datavalidated', () => {
+    if (hasRecommended) {
+      seriesRecommended.show(0);
+    } else {
+      seriesRecommended.hide(0);
+    }
     dateAxis.zoom({ start: 0, end: 1 }, true, true);
     chart.yAxes.getIndex(0).zoom({ start: 0, end: 1 }, true, true);
   });
@@ -930,8 +930,14 @@ window.table = $(tableSelector).DataTable({
     {
       data: 'account_name',
       title: __('Account'),
-      render: function (data) {
-        return data || __('No account');
+      render: function (data, type) {
+        if (data) {
+          return data;
+        }
+        // A span, not a class on the td: the table's own cell color rule outranks .not-set
+        return type === 'display'
+          ? '<span class="not-set">' + __('No account') + '</span>'
+          : __('No account');
       },
     },
     amountColumn(),
@@ -962,11 +968,6 @@ window.table = $(tableSelector).DataTable({
       },
     },
   ],
-  createdRow: function (row, data) {
-    if (!data.account_name) {
-      $('td', row).eq(1).addClass('not-set');
-    }
-  },
   order: [[0, 'asc']],
   deferRender: true,
   scrollY: '400px',

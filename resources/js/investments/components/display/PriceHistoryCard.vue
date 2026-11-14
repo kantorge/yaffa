@@ -33,7 +33,10 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   import { __ } from '@/shared/lib/i18n';
-  import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import {
+    applyAmChartsLocalization,
+    AMCHARTS_NUMBER_FORMAT_DEFAULTS,
+  } from '@/shared/lib/i18n/amcharts';
   import {
     applyAmChartsColorTheme,
     COLOR_MODE_EVENT,
@@ -116,6 +119,7 @@
         chart.dateFormatter.inputDateFormat = 'yyyy-MM-dd';
         chart.numberFormatter.intlLocales = this.locale;
         chart.numberFormatter.numberFormat = {
+          ...AMCHARTS_NUMBER_FORMAT_DEFAULTS,
           style: 'currency',
           currency: this.investment.currency.iso_code,
           currencyDisplay: 'narrowSymbol',
