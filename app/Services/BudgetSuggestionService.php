@@ -108,6 +108,11 @@ class BudgetSuggestionService
                 }
             }
 
+            // Only selected children, all switched off: nothing of the unit itself was asked for
+            if ($explicit && !isset($selected[$root->id]) && !$this->hasSelectedAnalysableMember($unit, $selected, $categories)) {
+                continue;
+            }
+
             if ($this->isExcluded($root, $categories)) {
                 if ($explicit) {
                     $units[] = $this->unitOutput($root, null, 'excluded', null);
@@ -196,6 +201,21 @@ class BudgetSuggestionService
         }
 
         return $this->regularCadence($this->sumSeries($members, $c), $c) !== null;
+    }
+
+    /**
+     * @param array{root: Category, members: int[]} $unit
+     * @param array<int, int> $selected Selected category ids as keys
+     */
+    private function hasSelectedAnalysableMember(array $unit, array $selected, Collection $categories): bool
+    {
+        foreach ($unit['members'] as $memberId) {
+            if (isset($selected[$memberId]) && $categories->get($memberId)->calculate_budget_suggestions) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
