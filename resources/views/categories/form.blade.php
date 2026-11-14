@@ -157,7 +157,7 @@
                         $ownSuggestions = isset($category) ? ($category->calculate_budget_suggestions ? 1 : 0) : 1;
                         $suggestionsOn = old() ? old('calculate_budget_suggestions') == '1' : $ownSuggestions;
                     @endphp
-                    <input type="hidden" id="calculate_budget_suggestions_hidden" name="calculate_budget_suggestions" value="{{ $parentSuggestionsOff ? $ownSuggestions : 0 }}" data-own="{{ $ownSuggestions }}">
+                    <input type="hidden" id="calculate_budget_suggestions_hidden" name="calculate_budget_suggestions" value="{{ $parentSuggestionsOff && $suggestionsOn ? 1 : 0 }}">
                     <input
                         id="calculate_budget_suggestions"
                         class="form-check-input"
