@@ -7,7 +7,7 @@
 | Aggregation (batched per user, per category and month) | `BudgetChartService::aggregateByCategory()` (extracted from `ReportApiController::budgetChart()`, whose response is pinned by golden-file tests) |
 | Detector, proposals, recommended series | `app/Services/BudgetSuggestionService.php`, `run()`. Read-only, returns plain arrays |
 | Endpoint | `GET /api/v1/reports/budget-suggestions` (`api.v1.reports.budget-suggestions`), `ReportApiController::budgetSuggestions()`, validated by `App\Http\Requests\API\BudgetSuggestionsRequest` |
-| Review command | `budget-suggestions:review {user} {--through=} {--sensitivity=} {--bias=} {--json} {--backtest}` (`ReviewBudgetSuggestions`) |
+| Review command | `budget-suggestions:review {user} {--through=} {--sensitivity=} {--bias=} {--json}` (`ReviewBudgetSuggestions`) |
 | Opt-out switch | `categories.calculate_budget_suggestions` (boolean, default true), `PATCH /api/v1/categories/{category}/budget-suggestions` (`CategoryApiController::patchBudgetSuggestions`), `CategoryRequest` field, category form checkbox |
 | Report panel | `resources/js/reports/components/BudgetSuggestions.vue` (+ `budgetSuggestions.js` helpers), mounted by `budgetchart.js` in `#budgetSuggestionsApp`; `BudgetForm.vue` `show(budgetId, prefill)` |
 | Moving average | `resources/js/reports/movingAverage.js` |
@@ -17,7 +17,7 @@ Endpoint, command and (later) MCP tool all call `run()`; `--json` output equals 
 
 ## Request
 
-`category_ids[]` (user-owned, non-empty) **xor** `all=1`; optional `data_through` (`Y-m`), `sensitivity` (`low|medium|high`), `bias` (`neutral|conservative|conservative_rounded`). Otherwise 422. A user without a base currency also gets 422. `--through` cannot be combined with `--backtest`.
+`category_ids[]` (user-owned, non-empty) **xor** `all=1`; optional `data_through` (`Y-m`), `sensitivity` (`low|medium|high`), `bias` (`neutral|conservative|conservative_rounded`). Otherwise 422. A user without a base currency also gets 422.
 
 ## Detector (per analysis unit)
 
@@ -60,7 +60,5 @@ Both endpoints are API controller actions with ability middleware: the report en
 - Mixed-sign rows inside one category net out before the neutral check; a schedule's sign is assumed to match its unit's.
 - Units whose root is inactive are skipped but their children still get their own units.
 - Average monthly expenses is the mean over 12 months of negative category-month actuals (refunds net against withdrawals), so it is approximate.
-- `--backtest` counts suggestions per category per year (more than 2 flagged) without deduplicating by key and without comparing to later actuals.
-- The `bias` value list is hard-coded in the request, the command and the service; the config comment lists only `neutral | conservative`.
 - The category form's parent note does not follow the parent dropdown live.
-- A queued/background mode was deferred: the full "Review all" run was within the 5 s synchronous target on the dev dataset (cold-cache margin small); re-measure on a larger dataset.
+- A queued/background mode was deferred: a performance review of "Review all" was done and passed, so it runs synchronously.

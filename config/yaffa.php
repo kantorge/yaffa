@@ -42,7 +42,7 @@ return [
     // Instance-wide and tuned in config only; sensitivity and bias are the user-facing run options.
     'budget_suggestions' => [
         'default_sensitivity' => 'medium',   // low | medium | high
-        'default_bias' => 'neutral',          // neutral | conservative
+        'default_bias' => 'neutral',          // neutral | conservative | conservative_rounded
         'min_history' => ['month' => 6, 'quarter' => 4, 'year' => 3],
         'level_window' => ['month' => 12, 'quarter' => 4, 'year' => 5], // = chart moving average
         'horizon' => ['month' => 12, 'quarter' => 4, 'year' => 2],
@@ -56,7 +56,6 @@ return [
         'bias' => ['unfavorable_factor' => 0.75, 'favorable_factor' => 1.5, 'margin' => 0.03],
         'neutral_net_share' => 0.25,
         'regularity' => ['month' => [10, 12], 'quarter' => [3, 4], 'year' => [2, 3]], // [k, of n] periods with at least one transaction
-        'max_sync_seconds' => 5,
     ],
     'scramble_prod_auth' => env('SCRAMBLE_PROD_AUTH', 'none'),
 

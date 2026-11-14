@@ -5,7 +5,7 @@
 | `budgetChart` unchanged by the extraction (golden files in `tests/Fixtures/budget_chart_*.json`) | `tests/Feature/API/BudgetChartRegressionTest.php` |
 | Detector, scope, cutoff, new budgets, conversion, schedules, series | `tests/Feature/Services/BudgetSuggestionServiceTest.php` |
 | Endpoint contract, validation, writes nothing | `tests/Feature/API/ReportApiBudgetSuggestionsTest.php` |
-| Command (`--json`, `--backtest`) | `tests/Feature/Console/ReviewBudgetSuggestionsCommandTest.php` |
+| Command (`--json`) | `tests/Feature/Console/ReviewBudgetSuggestionsCommandTest.php` |
 | Category switch | `tests/Feature/CategoryBudgetSuggestionsSwitchTest.php` |
 | Ability enforcement | `tests/Feature/API/ApiAbilityEnforcementTest.php` (rows `reports.budget-suggestions`, category switch) |
 | JS helpers | `resources/js/reports/budgetSuggestions.test.js`, `movingAverage.test.js` (`vendor/bin/sail npm run test:js`) |
