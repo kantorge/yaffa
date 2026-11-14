@@ -222,6 +222,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('categories.overview');
     Route::patch('/categories/{category}', [CategoryApiController::class, 'patchActive'])
         ->name('categories.patch-active');
+    Route::patch('/categories/{category}/budget-suggestions', [CategoryApiController::class, 'patchBudgetSuggestions'])
+        ->name('categories.patch-budget-suggestions');
     Route::delete('/categories/{category}', [CategoryApiController::class, 'destroy'])
         ->name('categories.destroy');
 
@@ -362,6 +364,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Report endpoints
     Route::get('/reports/budget-chart', [ReportApiController::class, 'budgetChart'])
         ->name('reports.budget-chart');
+    Route::get('/reports/budget-suggestions', [ReportApiController::class, 'budgetSuggestions'])
+        ->name('reports.budget-suggestions');
     Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])
         ->name('reports.cashflow');
     Route::get(

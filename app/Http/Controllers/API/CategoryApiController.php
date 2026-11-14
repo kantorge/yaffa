@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryBudgetSuggestionsRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
@@ -22,7 +23,7 @@ use Illuminate\Support\Facades\DB;
     'getList', 'getItem', 'overview',
 ])]
 #[Middleware('abilities:write', only: [
-    'store', 'patchActive', 'destroy',
+    'store', 'patchActive', 'patchBudgetSuggestions', 'destroy',
 ])]
 class CategoryApiController extends Controller
 {
@@ -187,6 +188,23 @@ class CategoryApiController extends Controller
         $validated = $request->validate(['active' => ['required', 'boolean']]);
 
         $category->active = $validated['active'];
+        $category->save();
+
+        return response()->json($category, Response::HTTP_OK);
+    }
+
+    /**
+     * Switch budget suggestions on or off for a category
+     *
+     * Accepts { calculate_budget_suggestions: true|false } in the request body.
+     * Off means "Review all" skips the category (and its children).
+     *
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    #[Authorize('update', 'category')]
+    public function patchBudgetSuggestions(CategoryBudgetSuggestionsRequest $request, Category $category): JsonResponse
+    {
+        $category->calculate_budget_suggestions = $request->validated('calculate_budget_suggestions');
         $category->save();
 
         return response()->json($category, Response::HTTP_OK);

@@ -52,6 +52,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static Builder|Category whereUpdatedAt($value)
  * @method static Builder|Category whereUserId($value)
  * @property string $default_aggregation
+ * @property bool $calculate_budget_suggestions
  * @property-read Collection<int, Category> $children
  * @property-read int|null $children_count
  * @property-read Collection<int, AccountEntity> $payeesDefaulting
@@ -64,7 +65,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static Builder<static>|Category whereDefaultAggregation($value)
  * @mixin \Eloquent
  */
-#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation')]
+#[Fillable('name', 'description', 'active', 'parent_id', 'default_aggregation', 'calculate_budget_suggestions')]
 #[Appends('full_name')]
 #[ObservedBy([CategoryObserver::class])]
 class Category extends Model
@@ -76,6 +77,7 @@ class Category extends Model
     {
         return [
             'active' => 'boolean',
+            'calculate_budget_suggestions' => 'boolean',
         ];
     }
 

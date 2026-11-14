@@ -18,6 +18,13 @@ class CategoryParentListComposer
             ->whereNull('parent_id')
             ->pluck('name', 'id');
 
+        // Parents that switched budget suggestions off exclude their children as well
         $view->with('parents', $parents);
+        $view->with('parentsSuggestionsOff', Auth::user()
+            ->categories()
+            ->whereNull('parent_id')
+            ->where('calculate_budget_suggestions', false)
+            ->pluck('id')
+            ->all());
     }
 }

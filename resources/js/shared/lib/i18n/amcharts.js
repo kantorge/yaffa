@@ -54,6 +54,11 @@ export async function loadAmChartsLocale(locale, language) {
   return null;
 }
 
+import { NUMBER_FORMAT_DEFAULTS } from './format';
+
+// Spread into chart.numberFormatter.numberFormat (amCharts hands it to Intl.NumberFormat)
+export const AMCHARTS_NUMBER_FORMAT_DEFAULTS = NUMBER_FORMAT_DEFAULTS;
+
 export async function applyAmChartsLocalization(
   chart,
   locale = window.YAFFA?.locale,

@@ -75,6 +75,8 @@
         </div>
     </div>
     <div class="col-lg-9">
+        <div id="budgetSuggestionsApp"></div>
+
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div class="text-start">
@@ -116,6 +118,14 @@
             </div>
             <div class="card-body position-relative">
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
+                <span
+                    id="recommendation-status"
+                    class="position-absolute top-0 end-0 m-2 badge fs-6 fw-normal text-bg-primary shadow-sm d-none"
+                    style="z-index: 5;"
+                    role="status"
+                    data-loading-text="{{ __('Calculating recommendation...') }}"
+                    data-failed-text="{{ __('Recommendation unavailable') }}"
+                ></span>
                 <div
                     id="chart-loading-overlay"
                     class="position-absolute top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center bg-body bg-opacity-75"
