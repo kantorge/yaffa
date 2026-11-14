@@ -2,7 +2,7 @@
 
 ## Built
 - `app/Services/BudgetSuggestionService.php`: `run(User, ?int[] $categoryIds, ?string $dataThrough, ?string $sensitivity, ?string $bias): array`. Read-only; it returns the spec's response contract.
-- Migration `2026_11_12_000001_add_budget_suggestions_excluded_to_categories_table` (boolean, default false). `Category` has the `boolean` cast and the field is `#[Fillable]`. `CategoryRequest`/`CategoryResource` are untouched (phase 3).
+- Migration `2026_11_12_000001_add_calculate_budget_suggestions_to_categories_table` (boolean, default true; the 2a build first shipped it as `budget_suggestions_excluded`, default false, before the rename). `Category` has the `boolean` cast and the field is `#[Fillable]`. `CategoryRequest`/`CategoryResource` are untouched (phase 3).
 - `config/yaffa.php`: the `budget_suggestions` block, verbatim from the spec.
 - `BudgetChartService::aggregateByCategory()`: additive key `missingRatePeriods` (category id => [Y-m-01 => true]). Nothing else changed; `chart()` is untouched.
 - `tests/Feature/Services/BudgetSuggestionServiceTest.php`: 26 tests.
@@ -17,11 +17,11 @@
 - Amounts are floats rounded to 2 decimals, signed (withdrawals negative).
 
 ## Deviations from the spec
-All are in the decisions log. Summary: floor from negative category-month actuals and scaled to a month; `create` amount is target − E; horizon truncated to `end_date`; empty units skipped in "Review all"; `missingRatePeriods` key.
+All are in the decisions log. Summary: floor from negative category-month actuals and scaled to a month (now optional and off by default, see the phase 3 handoff); `create` amount is target − E; horizon truncated to `end_date`; empty units skipped in "Review all"; `missingRatePeriods` key.
 
 ## Measurements
-- Dev database (the phase 1 dataset): `run()` for all categories took 3.1 s in the sail container, with a warm cache. Verdicts: 62 no_drift, 27 suggestion, 3 cooldown, 6 irregular, 1 needs_review.
-- 27 suggestions for about 100 units is too many for a first run: this is what the 2b `--backtest` tuning is for (thresholds are in config only).
+- Dev database (the phase 1 dataset): `run()` for all categories finished in a few seconds in the sail container with a warm cache, inside the 5 s target.
+- A first run on that data gave too many suggestions: this is what the 2b `--backtest` tuning is for (thresholds are in config only).
 - Not yet measured: a cold cache run, and the query count.
 
 ## Tests

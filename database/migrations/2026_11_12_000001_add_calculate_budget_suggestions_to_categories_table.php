@@ -5,20 +5,20 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Opt-out flag for the budget drift review ("Review all" skips flagged categories and their children).
+ * Opt-out switch for the budget drift review: "Review all" skips categories with the flag off, and their children.
  */
 return new class () extends Migration {
     public function up(): void
     {
         Schema::table('categories', function (Blueprint $table) {
-            $table->boolean('budget_suggestions_excluded')->default(false);
+            $table->boolean('calculate_budget_suggestions')->default(true);
         });
     }
 
     public function down(): void
     {
         Schema::table('categories', function (Blueprint $table) {
-            $table->dropColumn('budget_suggestions_excluded');
+            $table->dropColumn('calculate_budget_suggestions');
         });
     }
 };

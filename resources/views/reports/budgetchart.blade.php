@@ -75,6 +75,8 @@
         </div>
     </div>
     <div class="col-lg-9">
+        <div id="budgetSuggestionsApp"></div>
+
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <div class="text-start">

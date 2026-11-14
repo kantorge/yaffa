@@ -28,7 +28,7 @@ class BudgetSuggestionsRequest extends FormRequest
             'all' => ['nullable', 'boolean'],
             'data_through' => ['nullable', 'date_format:Y-m'],
             'sensitivity' => ['nullable', Rule::in(array_keys(config('yaffa.budget_suggestions.sensitivity')))],
-            'bias' => ['nullable', Rule::in(['neutral', 'conservative'])],
+            'bias' => ['nullable', Rule::in(['neutral', 'conservative', 'conservative_rounded'])],
         ];
     }
 
@@ -43,7 +43,7 @@ class BudgetSuggestionsRequest extends FormRequest
                 $all = $this->boolean('all');
 
                 if ($hasIds === $all) {
-                    $validator->errors()->add('category_ids', 'Provide either category_ids or all=1.');
+                    $validator->errors()->add('category_ids', __('Provide either category_ids or all=1.'));
                 }
             },
         ];

@@ -21,6 +21,7 @@ import {
   scheduleCadenceText,
   getArrayParamFromUrl,
   toIsoDateString,
+  parseIsoDate,
 } from '@/shared/lib/helpers';
 import * as toastHelpers from '@/shared/lib/toast';
 import {
@@ -31,6 +32,9 @@ import { confirmDelete } from '@/shared/lib/confirm';
 import { createApp } from 'vue';
 import BudgetForm from '@/reports/components/BudgetForm.vue';
 import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
+import BudgetSuggestions from '@/reports/components/BudgetSuggestions.vue';
+import { computeMovingAverage } from '@/reports/movingAverage';
+import { applyRecommended, indexSeries } from '@/reports/budgetSuggestions';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
 // Category tree
@@ -44,60 +48,6 @@ const getSelectedCategoryIds = () =>
   $(treeSelector).jstree()
     ? $(treeSelector).jstree('get_checked').map(String)
     : [];
-
-const getAverage = (data, attribute) =>
-  data.reduce((acc, val) => acc + val[attribute], 0) / data.length;
-
-const computeMovingAverage = (baseData, interval) => {
-  // Don't do any calculations if there is no data
-  if (baseData.length === 0) {
-    return baseData;
-  }
-
-  // Set the period based on the interval
-  let period = 12;
-  if (interval === 'quarter') {
-    period = 4 * 3;
-  } else if (interval === 'year') {
-    period = 5 * 12;
-  }
-
-  // Find the last element with actual data, default to the last element
-  let maxActualDate = null;
-  for (let i = baseData.length; i > 0; i--) {
-    if (baseData[i - 1].actual) {
-      maxActualDate = baseData[i - 1].date;
-      break;
-    }
-  }
-  if (!maxActualDate) {
-    maxActualDate = baseData[baseData.length - 1].date;
-  }
-
-  // Loop through all elements, and calculate the moving average for each
-  return baseData.map(function (currentItem, index) {
-    // For future dates, we set the last moving average
-    if (currentItem.date > maxActualDate) {
-      if (index > 0) {
-        currentItem.movingAverage = baseData[index - 1].movingAverage;
-      }
-      return currentItem;
-    }
-
-    // Calculate the interval start and end dates, using the number of months determined by the period
-    const intervalStart = new Date(currentItem.date.getTime());
-    intervalStart.setMonth(intervalStart.getMonth() - period);
-    const intervalEnd = currentItem.date;
-
-    const previousPeriod = baseData.filter(function (item) {
-      return item.date >= intervalStart && item.date <= intervalEnd;
-    });
-
-    currentItem.movingAverage = getAverage(previousPeriod, 'actual');
-
-    return currentItem;
-  });
-};
 
 // FR-7: flatten the per-period budgetBreakdown arrays budgetChart() returns into one row per
 // distinct contributing Budget row (a recurring budget appears in every period it lands in;
@@ -211,6 +161,7 @@ let chart,
   seriesForecast,
   seriesBudget,
   seriesMovingAverage,
+  seriesRecommended,
   scrollbarX;
 
 function initChart() {
@@ -267,6 +218,7 @@ function initChart() {
   const colorMovingAverage = am4core.color('#1B4F72');
   const colorForecastFill = am4core.color('#b39ddb');
   const colorForecastStroke = am4core.color('#7e57c2');
+  const colorRecommended = am4core.color('#e67e22');
 
   seriesActual = chart.series.push(new am4charts.ColumnSeries());
   seriesActual.dataFields.valueY = 'actual';
@@ -313,6 +265,21 @@ function initChart() {
   seriesBudget.tooltipText = '[bold]' + __('Budget') + ':[/] {valueY}';
   seriesBudget.tooltip.getFillFromObject = false;
   seriesBudget.tooltip.background.fill = colorForecastStroke;
+
+  // Budget suggestions: the expectation (budget plus forecast) with the open recommendations
+  // applied. Only filled after a check of the same categories as the loaded chart.
+  seriesRecommended = chart.series.push(new am4charts.LineSeries());
+  seriesRecommended.strokeWidth = 3;
+  seriesRecommended.strokeDasharray = '2,4';
+  seriesRecommended.fill = colorRecommended;
+  seriesRecommended.stroke = colorRecommended;
+  seriesRecommended.dataFields.valueY = 'recommended';
+  seriesRecommended.dataFields.dateX = 'date';
+  seriesRecommended.name = __('Recommended budget');
+  seriesRecommended.tooltipText =
+    '[bold]' + __('Recommended budget') + ':[/] {valueY}';
+  seriesRecommended.tooltip.getFillFromObject = false;
+  seriesRecommended.tooltip.background.fill = colorRecommended;
 
   seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
   seriesMovingAverage.strokeWidth = 3;
@@ -369,6 +336,13 @@ if (btnZoomIn) {
 }
 
 let rawData = [];
+// Recommended-budget series from the last budget check: { key: sorted category ids, byMonth }.
+// Shown only while the loaded chart covers exactly those categories.
+let recommended = null;
+let loadedCategoryKey = '';
+let loadedAllAccounts = true;
+
+const categoryKey = (ids) => ids.map(String).sort().join(',');
 
 // Warns the user when the currently displayed chart no longer reflects the active filters
 // (category/account/account-scope changed after the last successful load, without reloading).
@@ -392,6 +366,8 @@ let reloadData = function () {
   const selectedCategories = $(treeSelector).jstree()
     ? $(treeSelector).jstree('get_checked', true)
     : [];
+
+  const loadedScope = $('input[name=table_filter_account_scope]:checked').val();
 
   $.ajax({
     url: window.route('api.v1.reports.budget-chart'),
@@ -418,12 +394,14 @@ let reloadData = function () {
     })
     .done(function (data) {
       markDataFresh();
+      loadedCategoryKey = categoryKey(selectedCategories.map((c) => c.id));
+      loadedAllAccounts = loadedScope === 'any';
 
       const chartData = Array.isArray(data) ? data : data.chartData || [];
 
       // Convert date strings to Date objects
       const parsedChartData = chartData.map(function (item) {
-        item.date = new Date(item.period);
+        item.date = parseIsoDate(item.period);
         return item;
       });
 
@@ -487,6 +465,15 @@ let reloadData = function () {
     });
 };
 
+// The recommendation covers all accounts and the categories of the last check
+function showsRecommended() {
+  return (
+    recommended !== null &&
+    recommended.key === loadedCategoryKey &&
+    loadedAllAccounts
+  );
+}
+
 function updateChart(rawData) {
   if (rawData.length === 0) {
     chart.data = [];
@@ -498,6 +485,22 @@ function updateChart(rawData) {
     document.querySelector('input[name="chart_time_interval"]:checked')
       ?.value || 'month';
   let data;
+
+  // A category without budget or schedule has no rows after its last actual: add the months the
+  // recommended line covers
+  if (showsRecommended()) {
+    const have = new Set(rawData.map((row) => row.period.slice(0, 7)));
+    const extra = [...recommended.byMonth.keys()]
+      .filter((month) => !have.has(month))
+      .map((month) => ({
+        period: month + '-01',
+        date: parseIsoDate(month + '-01'),
+        actual: 0,
+        budget: 0,
+        forecast: 0,
+      }));
+    rawData = rawData.concat(extra).sort((a, b) => a.date - b.date);
+  }
 
   // Aggregate the data by quarter or year, based on user selection
   if (aggregation === 'quarter') {
@@ -637,7 +640,7 @@ function updateChart(rawData) {
       ) {
         data.push({
           date: new Date(currentDate),
-          period: currentDate.toISOString().slice(0, 7),
+          period: toIsoDateString(currentDate).slice(0, 7),
           actual: 0,
           budget: 0,
           forecast: 0,
@@ -658,6 +661,9 @@ function updateChart(rawData) {
 
   // Add moving average (knowing that data is ordered)
   data = computeMovingAverage(data, aggregation);
+  if (showsRecommended()) {
+    applyRecommended(data, aggregation, rawData, recommended.byMonth);
+  }
 
   // Update the chart settings
   chart.data = data;
@@ -691,11 +697,11 @@ const budgetFormApp = createApp({
     showEditBudgetModal(budgetId) {
       this.$refs.budgetFormEdit.show(budgetId);
     },
-    showReplaceBudgetModal(budgetId) {
-      this.$refs.budgetFormReplace.show(budgetId);
+    showReplaceBudgetModal(budgetId, prefill = null) {
+      this.$refs.budgetFormReplace.show(budgetId, prefill);
     },
-    showNewBudgetModal() {
-      this.$refs.budgetFormNew.show();
+    showNewBudgetModal(prefill = null) {
+      this.$refs.budgetFormNew.show(null, prefill);
     },
     showBudgetQuickView(budgetId) {
       fetch(route('api.v1.budgets.show', { budget: budgetId }))
@@ -706,8 +712,9 @@ const budgetFormApp = createApp({
           }
         });
     },
-    onBudgetSaved() {
+    onBudgetSaved(budget) {
       toastHelpers.showSuccessToast(__('Budget saved'));
+      dropAppliedSuggestion(budget);
       // A Budget's own amount/period/account feeds directly into the chart's aggregate
       // totals, so only a full reload (not a local row patch) keeps both the chart and
       // this breakdown table correct.
@@ -715,6 +722,7 @@ const budgetFormApp = createApp({
     },
     onNewBudgetSaved(budget) {
       const selectedCategoryIds = getSelectedCategoryIds();
+      dropAppliedSuggestion(budget);
 
       // A budget created for a category outside the current selection wouldn't show up in
       // this chart anyway - warn instead of silently reloading data that won't change.
@@ -731,12 +739,65 @@ const budgetFormApp = createApp({
       }
 
       toastHelpers.showSuccessToast(__('Budget saved'));
-      reloadData();
+      if (selectedCategoryIds.length > 0) {
+        reloadData();
+      }
     },
   },
 });
 installRouteGlobal(budgetFormApp);
 const budgetForm = budgetFormApp.mount('#budgetChartFormApp');
+
+// Once the budget of the recommendation being applied is saved, the recommendation is done and
+// the recommended line (which assumed it unapplied) is stale.
+function dropAppliedSuggestion(budget) {
+  if (suggestionsPanel.markApplied(budget?.category_id)) {
+    recommended = null;
+  }
+}
+
+// Budget check panel (its own Vue island above the chart)
+const suggestionsApp = createApp(BudgetSuggestions, {
+  getSelectedCategoryIds,
+  getDefaultAggregation: (id) =>
+    $(treeSelector).jstree(true)?.get_node(String(id))?.original
+      ?.default_aggregation,
+  onResult: ({ series, categoryIds, reload }) => {
+    recommended =
+      series && categoryIds
+        ? { key: categoryKey(categoryIds), byMonth: indexSeries(series) }
+        : null;
+    if (reload) {
+      // The check covers all accounts, so the chart is loaded for the same categories and scope
+      showAllAccounts();
+      rebuildUrl();
+      reloadData();
+    } else if (rawData.length > 0) {
+      updateChart(rawData);
+    }
+  },
+  onFocusCategory: (categoryId) => {
+    // Show only this category on the chart, with its recommended series
+    $(treeSelector).jstree('uncheck_all');
+    $(treeSelector).jstree('check_node', String(categoryId));
+    showAllAccounts();
+    rebuildUrl();
+    reloadData();
+    suggestionsPanel.loadSeries();
+    document
+      .getElementById('chartdiv')
+      .scrollIntoView({ behavior: 'smooth', block: 'center' });
+  },
+  onApply: ({ budgetId, prefill }) => {
+    if (budgetId !== null) {
+      budgetForm.showReplaceBudgetModal(budgetId, prefill);
+    } else {
+      budgetForm.showNewBudgetModal(prefill);
+    }
+  },
+});
+installRouteGlobal(suggestionsApp);
+const suggestionsPanel = suggestionsApp.mount('#budgetSuggestionsApp');
 
 function confirmAndDelete(routeName, routeParams, id) {
   confirmDelete(__('Are you sure to want to delete this item?'), {
@@ -1080,8 +1141,8 @@ const accountSelect = createRemoteSelect(accountElement, {
   params: (term) => ({ q: term || undefined, withInactive: true }),
   mapResult: (account) => ({ id: account.id, text: account.name }),
   placeholder: __('Select account'),
-  onSelect: rebuildUrl,
-  onClear: rebuildUrl,
+  // onChange, not onSelect: Tom Select fires item_add before it updates the <select> value
+  onChange: rebuildUrl,
 });
 
 // Default account
@@ -1120,6 +1181,13 @@ document.getElementById('clear').addEventListener('click', function () {
   $(treeSelector).jstree('uncheck_all');
   rebuildUrl();
 });
+
+// The budget check always covers all accounts: the chart must use the same scope
+function showAllAccounts() {
+  document.getElementById('table_filter_account_scope_any').checked = true;
+  accountSelect.disable();
+  clearSelect(accountSelect, { silent: true });
+}
 
 // Account type switch
 $('input[name=table_filter_account_scope]').on('change', function () {

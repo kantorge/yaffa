@@ -21,7 +21,7 @@ If the spec and the code disagree on how existing code behaves, the code wins: r
 | Id | Scope | Role files | Done when |
 | --- | --- | --- | --- |
 | 1 | Extract `BudgetChartService` from `ReportApiController::budgetChart()`; add batched per-user aggregation; measure "Review all" runtime | `laravel-backend`, `testing` | `budgetChart` regression test passes with byte-identical output; runtime measured on a realistic dataset and recorded in the handoff |
-| 2a | `BudgetSuggestionService` (units, verdicts, drift, new budgets, amount conversion, recommended series); `budget_suggestions` config block; `categories.budget_suggestions_excluded` migration and model cast | `laravel-backend`, `testing` | All detector, scope, cutoff and new-budget unit tests from the spec pass |
+| 2a | `BudgetSuggestionService` (units, verdicts, drift, new budgets, amount conversion, recommended series); `budget_suggestions` config block; `categories.calculate_budget_suggestions` migration and model cast | `laravel-backend`, `testing` | All detector, scope, cutoff and new-budget unit tests from the spec pass |
 | 2b | GET endpoint with Form Request and `abilities:read`; `ApiAbilityEnforcementTest` row; `budget-suggestions:review` command with `--json` and `--backtest`; contract tests; `mcp-integration.md` | `laravel-backend`, `testing` | Feature, ability and contract tests pass; the command's output matches the endpoint's for the same input |
 | 3 | Report page: run controls, both run buttons, recommendation list (create, hide, stop monitoring), unit verdict list, recommended-budget series, category form toggle, moving-average fix | `frontend`, `testing` | Assets build; the owner's UI check passes |
 | 3t | Translations for every new string in all `/lang` files | `frontend` | Every locale file has the keys; non-English strings flagged for native-speaker review in the PR |
@@ -41,7 +41,7 @@ Phases run strictly in order. An agent never starts the next phase.
 
 ## Guardrails for all agents
 
-- No database changes beyond `categories.budget_suggestions_excluded`. No new tables, no `users` columns.
+- No database changes beyond `categories.calculate_budget_suggestions`. No new tables, no `users` columns.
 - The GET endpoint and the service write nothing. A contract test enforces this.
 - `ReportApiController::budgetChart()` keeps its response exactly as before.
 - Every new or changed API action declares its ability middleware, and `ApiAbilityEnforcementTest` gets a matching row (see `CLAUDE.md`).

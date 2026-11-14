@@ -42,12 +42,13 @@ afterEach(fn () => Carbon::setTestNow());
 it('returns the response contract with a series for explicit categories', function () {
     $response = $this->getJson(route('api.v1.reports.budget-suggestions', ['category_ids' => [$this->category->id]]))
         ->assertOk()
-        ->assertJsonStructure(['run' => ['computed_at', 'scope', 'data_through', 'sensitivity', 'bias', 'tolerance', 'detector_version'], 'units', 'series']);
+        ->assertJsonStructure(['run' => ['computed_at', 'scope', 'data_through', 'sensitivity', 'bias', 'tolerance', 'detector_version', 'average_monthly_expenses', 'materiality_floor_share'], 'units', 'series']);
 
     expect($response->json('run.scope'))->toBe('selected')
         ->and($response->json('run.data_through'))->toBe('2026-11')
         ->and($response->json('units.0.verdict'))->toBe('suggestion')
         ->and($response->json('units.0.suggestion.proposal_type'))->toBe('replace')
+        ->and($response->json('units.0.suggestion.monthly_impact'))->toBeLessThan(0)
         ->and($response->json('units.0.suggestion.budget_id'))->toBe($this->budget->id)
         ->and($response->json('series'))->not->toBeEmpty();
 });
@@ -129,4 +130,12 @@ it('returns 422 for a user without any currency', function () {
     Sanctum::actingAs($other, ['read']);
 
     $this->getJson(route('api.v1.reports.budget-suggestions', ['all' => 1]))->assertUnprocessable();
+});
+
+it('returns the impact fields and run averages for review all', function () {
+    $response = $this->getJson(route('api.v1.reports.budget-suggestions', ['all' => 1]))->assertOk();
+
+    expect($response->json('run.materiality_floor_share'))->toEqual(0)
+        ->and($response->json('run.average_monthly_expenses'))->toBeGreaterThan(0)
+        ->and($response->json('units.0.suggestion.impact_share'))->toBeGreaterThan(0);
 });

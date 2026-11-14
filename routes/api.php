@@ -222,6 +222,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('categories.overview');
     Route::patch('/categories/{category}', [CategoryApiController::class, 'patchActive'])
         ->name('categories.patch-active');
+    Route::patch('/categories/{category}/budget-suggestions', [CategoryApiController::class, 'patchBudgetSuggestions'])
+        ->name('categories.patch-budget-suggestions');
     Route::delete('/categories/{category}', [CategoryApiController::class, 'destroy'])
         ->name('categories.destroy');
 

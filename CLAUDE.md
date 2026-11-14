@@ -30,6 +30,7 @@ vendor/bin/sail bin pint --dirty          # fix PHP code style
 
 - **NEVER modify `.env`** — ask the user instead; it is off-limits at all times
 - **Never comment on a GitHub issue or PR (`gh issue comment`, `gh pr comment`, `gh pr review`, or the raw API) without asking first.** Draft the comment and ask; post only after explicit approval. Creating PRs/issues, pushing commits, and other git operations already covered by an established collaborative workflow are unaffected — this is scoped to posting comments specifically.
+- **Never put details about tests or validations run on the owner's real data into documentation or any GitHub record (PR descriptions, issues, comments, commit messages, handoff notes).** That includes category or payee names, asset or row counts, averages, amounts and runtimes tied to that dataset. Say only that a check was run, or describe it with synthetic data.
 - **Every change to `routes/web.php` must be reflected in `routes/breadcrumbs.php`** — add, rename, or remove the matching `Breadcrumbs::for()` entry for each page route (the name must match the route name; routes without a rendered page, e.g. POST handlers, need none)
 - Always rebuild assets after JS/Vue/SCSS changes before testing UI
 - Always run Pint and PHPStan before finalizing PHP changes
