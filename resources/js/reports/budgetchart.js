@@ -554,7 +554,7 @@ function updateChart(rawData) {
             currentDate.getFullYear() +
             ' Q' +
             (Math.floor(currentDate.getMonth() / 3) + 1),
-          actual: 0,
+          actual: null,
           budget: 0,
           forecast: 0,
         });
@@ -609,7 +609,7 @@ function updateChart(rawData) {
         data.push({
           date: new Date(currentDate),
           period: currentDate.getFullYear().toString(),
-          actual: 0,
+          actual: null,
           budget: 0,
           forecast: 0,
         });
@@ -641,7 +641,7 @@ function updateChart(rawData) {
         data.push({
           date: new Date(currentDate),
           period: toIsoDateString(currentDate).slice(0, 7),
-          actual: 0,
+          actual: null,
           budget: 0,
           forecast: 0,
         });

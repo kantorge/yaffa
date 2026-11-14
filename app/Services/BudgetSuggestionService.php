@@ -650,7 +650,11 @@ class BudgetSuggestionService
         $candidates = [];
 
         foreach ($rows as $budget) {
-            $dates = $this->budgetService->projectOccurrences($budget, $from, $to);
+            // The replacement restarts the recurrence at the effective date, as recommendedSeries() projects it
+            $dates = array_map(
+                fn ($occurrence) => Carbon::instance($occurrence->getStart()),
+                $this->recurrenceRuleService->getRecurrenceBetween($from, $budget->effectiveRrule(), $from, $to)->toArray()
+            );
             $occurrences = count($dates);
             if ($occurrences === 0) {
                 continue;

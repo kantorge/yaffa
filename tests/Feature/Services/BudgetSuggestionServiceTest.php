@@ -243,8 +243,9 @@ it('converts a weekly row to a per-occurrence amount', function () {
 
     $suggestion = unitFor(review([$category->id]), $category)['suggestion'];
 
-    // 2027 has 52 Mondays: E = -52000 / 12, gap per month -866.67, 4.33 occurrences a month: -200 each
-    expect($suggestion)->toMatchArray(['current_amount' => -1000.0, 'suggested_amount' => -1200.0])
+    // E = -52000 over 2027 (52 Mondays), gap -10400 a year. The replacement restarts on Friday 2027-01-01,
+    // which gives 53 occurrences in 2027: -10400 / 53 = -196.23 each
+    expect($suggestion)->toMatchArray(['current_amount' => -1000.0, 'suggested_amount' => -1196.23])
         ->and($suggestion['cadence'])->toBe(['frequency' => 'WEEKLY', 'interval' => 1]);
 });
 

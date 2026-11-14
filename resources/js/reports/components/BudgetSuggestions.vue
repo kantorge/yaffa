@@ -396,6 +396,8 @@
         loading: false,
         // Bumped when a run or series request starts, so an older response is ignored
         generation: 0,
+        // Counts runs only, so an older run's callbacks cannot overwrite a newer one
+        runToken: 0,
         // Mode and ids of the displayed run, reused to refresh it
         lastRun: null,
         error: null,
@@ -461,6 +463,7 @@
         this.loading = true;
         this.error = null;
         this.generation++;
+        const token = ++this.runToken;
         this.lastRun = { mode, ids: mode === 'all' ? null : categoryIds };
 
         return window.axios
@@ -469,6 +472,9 @@
             timeout: 60000,
           })
           .then(({ data }) => {
+            if (token !== this.runToken) {
+              return;
+            }
             this.result = data;
             this.runOptions = {
               sensitivity: params.sensitivity,
@@ -491,6 +497,9 @@
             });
           })
           .catch((error) => {
+            if (token !== this.runToken) {
+              return;
+            }
             this.result = null;
             this.error =
               error.response?.data?.message ||
@@ -499,7 +508,9 @@
               });
           })
           .finally(() => {
-            this.loading = false;
+            if (token === this.runToken) {
+              this.loading = false;
+            }
           });
       },
 
