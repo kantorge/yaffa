@@ -247,6 +247,8 @@ function initChart() {
 
   seriesMovingAverage = chart.series.push(new am4charts.LineSeries());
   seriesMovingAverage.strokeWidth = 3;
+  // Draw above the column series regardless of creation order
+  seriesMovingAverage.zIndex = 100;
   seriesMovingAverage.fill = colorMovingAverage;
   seriesMovingAverage.stroke = colorMovingAverage;
   seriesMovingAverage.dataFields.valueY = 'movingAverage';
