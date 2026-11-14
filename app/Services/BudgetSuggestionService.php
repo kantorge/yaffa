@@ -650,6 +650,10 @@ class BudgetSuggestionService
         $candidates = [];
 
         foreach ($rows as $budget) {
+            // The row itself must still contribute in the horizon (e.g. not ended or exhausted by its count)
+            if ($this->recurrenceRuleService->getRecurrenceBetween($budget->start_date, $budget->effectiveRrule(), $from, $to)->isEmpty()) {
+                continue;
+            }
             // The replacement restarts the recurrence at the effective date, as recommendedSeries() projects it
             $dates = array_map(
                 fn ($occurrence) => Carbon::instance($occurrence->getStart()),

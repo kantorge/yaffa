@@ -116,6 +116,8 @@ it('matches the recommended series with a saved and re-projected budget', functi
         'start_date' => $suggestion['effective_date'], 'end_date' => null, 'count' => null, 'inflation' => null, 'active' => true,
     ]);
 
+    // projectOccurrences() caches per updated_at second, so the same-second end_date update would be served stale
+    Illuminate\Support\Facades\Cache::flush();
     // The saved row now contributes to the chart's own budget + forecast for the category.
     $periods = app(App\Services\BudgetChartService::class)->aggregateByCategory($this->user)['categories'][$this->category->id];
 

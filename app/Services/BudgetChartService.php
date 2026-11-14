@@ -136,7 +136,7 @@ class BudgetChartService
             $scheduleTransactions = new \Illuminate\Database\Eloquent\Collection();
         } else {
             $scheduleTransactions = Transaction::with([
-                'transactionItems.category',
+                'transactionItems.category.parent',
                 'transactionSchedule',
             ])
                 ->whereHas('transactionItems', function ($query) use ($categories) {
@@ -205,7 +205,7 @@ class BudgetChartService
 
             $categoryNames = $transaction->transactionItems
                 ->filter(fn ($item) => $categoryIds->contains($item->category_id))
-                ->pluck('category.name')
+                ->pluck('category.full_name')
                 ->unique()
                 ->values()
                 ->all();
@@ -240,7 +240,7 @@ class BudgetChartService
         // getScheduledItems()'s identical 'none' => whereNull('account_id') handling of Budget
         // rows - a budget with no account is exactly what "none" means here, not "no budgets"),
         // and 'any' (default) keeps the unfiltered FR-2 behaviour.
-        $budgets = Budget::with(['category', 'account.config.currency'])
+        $budgets = Budget::with(['category.parent', 'account.config.currency'])
             ->where('user_id', $user->id)
             ->whereIn('category_id', $categories->pluck('id'))
             ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->where('account_id', $accountEntity))
@@ -291,9 +291,10 @@ class BudgetChartService
                 $budgetBreakdown[$period][] = [
                     'budget_id' => $budget->id,
                     'category_id' => $budget->category_id,
-                    'category_name' => $budget->category->name,
+                    'category_name' => $budget->category->full_name,
                     'account_id' => $budget->account_id,
                     'account_name' => $budget->account?->name,
+                    'active' => $budget->active,
                     'amount' => $amount->toFloat(),
                     'currency_id' => $currency_id,
                     'currency' => $allCurrencies->get($currency_id),
@@ -465,11 +466,10 @@ class BudgetChartService
             }
         );
 
-        // Budget rows: all active rows regardless of account, as chart() does for scope "any".
+        // Budget rows: all rows (closed ones too, as their past periods are history) regardless of account, as chart() does for scope "any".
         $inflationCalculator = new InflationCalculator();
         $budgets = Budget::with(['account.config.currency'])
             ->where('user_id', $user->id)
-            ->where('active', true)
             ->get();
 
         foreach ($budgets as $budget) {
