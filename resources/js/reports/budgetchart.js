@@ -70,11 +70,14 @@ function buildBudgetBreakdownRows(rawData) {
           budget_id: row.budget_id,
           category_name: row.category_name,
           account_name: row.account_name,
+          active: row.active,
           amount: row.amount,
           amountStart: row.amount,
           currency: row.currency,
           cadence: scheduleCadenceText(row.transaction_schedule),
           inflation: row.transaction_schedule?.inflation || null,
+          // Open-ended rows sort as the latest end
+          endDateSort: row.transaction_schedule?.end_date || '9999-12-31',
           periodDateStart: periodEntry.date,
           periodDate: periodEntry.date,
         });
@@ -113,6 +116,8 @@ function buildScheduleBreakdownRows(rawData) {
           currency: row.currency,
           cadence: scheduleCadenceText(row.transaction_schedule),
           inflation: row.transaction_schedule?.inflation || null,
+          // Open-ended rows sort as the latest end
+          endDateSort: row.transaction_schedule?.end_date || '9999-12-31',
           periodDateStart: periodEntry.date,
           periodDate: periodEntry.date,
         });
@@ -946,6 +951,13 @@ window.table = $(tableSelector).DataTable({
       title: __('Cadence'),
     },
     {
+      data: 'active',
+      title: __('Active'),
+      className: 'text-center',
+      render: dataTableHelpers.booleanToTableIcon,
+    },
+    { data: 'endDateSort', visible: false },
+    {
       data: 'budget_id',
       title: __('Actions'),
       orderable: false,
@@ -968,7 +980,7 @@ window.table = $(tableSelector).DataTable({
       },
     },
   ],
-  order: [[0, 'asc']],
+  order: [[4, 'desc'], [5, 'desc']],
   deferRender: true,
   scrollY: '400px',
   scrollCollapse: true,

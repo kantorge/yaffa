@@ -12,6 +12,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -54,6 +55,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -84,9 +86,10 @@
                 {
                     "budget_id": 2,
                     "category_id": 2,
-                    "category_name": "Groceries",
+                    "category_name": "Food > Groceries",
                     "account_id": 1,
                     "account_name": "Checking",
+                    "active": true,
                     "amount": -90,
                     "currency_id": 1,
                     "currency": {
@@ -129,6 +132,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -171,6 +175,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -213,6 +218,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -243,9 +249,10 @@
                 {
                     "budget_id": 2,
                     "category_id": 2,
-                    "category_name": "Groceries",
+                    "category_name": "Food > Groceries",
                     "account_id": 1,
                     "account_name": "Checking",
+                    "active": true,
                     "amount": -90,
                     "currency_id": 1,
                     "currency": {
@@ -288,6 +295,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -330,6 +338,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -362,7 +371,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
@@ -406,6 +415,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -436,9 +446,10 @@
                 {
                     "budget_id": 2,
                     "category_id": 2,
-                    "category_name": "Groceries",
+                    "category_name": "Food > Groceries",
                     "account_id": 1,
                     "account_name": "Checking",
+                    "active": true,
                     "amount": -90,
                     "currency_id": 1,
                     "currency": {
@@ -471,7 +482,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
@@ -515,6 +526,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -547,7 +559,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
@@ -591,6 +603,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -623,7 +636,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
@@ -667,6 +680,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -697,9 +711,10 @@
                 {
                     "budget_id": 2,
                     "category_id": 2,
-                    "category_name": "Groceries",
+                    "category_name": "Food > Groceries",
                     "account_id": 1,
                     "account_name": "Checking",
+                    "active": true,
                     "amount": -90,
                     "currency_id": 1,
                     "currency": {
@@ -732,7 +747,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
@@ -776,6 +791,7 @@
                     "category_name": "Food",
                     "account_id": null,
                     "account_name": null,
+                    "active": true,
                     "amount": -200,
                     "currency_id": 1,
                     "currency": {
@@ -808,7 +824,7 @@
                 {
                     "transaction_id": 1,
                     "category_names": [
-                        "Groceries",
+                        "Food > Groceries",
                         "Other"
                     ],
                     "amount": -30,
