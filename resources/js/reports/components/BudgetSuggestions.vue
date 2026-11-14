@@ -316,39 +316,49 @@
 
         <details v-if="groups.length > 0">
           <summary>{{ __('Categories without a recommendation') }}</summary>
-          <div v-for="group in groups" :key="group.verdict" class="mt-2">
-            <div class="fw-bold small">
+          <div v-for="group in groups" :key="group.verdict" class="mt-3">
+            <div class="fw-bold small mb-1">
               {{ verdictLabel(group.verdict) }} ({{ group.units.length }})
             </div>
-            <div v-if="group.verdict === 'no_drift'" class="small text-muted">
-              <div
+            <ul class="list-group list-group-flush small">
+              <li
                 v-for="unit in group.units"
                 :key="unit.category_id"
-                class="d-flex align-items-center gap-2 mb-1"
+                class="list-group-item d-flex align-items-center gap-2 py-1 px-0"
                 data-testid="no-drift-unit"
               >
-                <span>{{ unit.category_name }}</span>
+                <span
+                  class="flex-grow-1 text-truncate"
+                  :title="unit.category_name"
+                  >{{ unit.category_name }}</span
+                >
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-primary py-0"
+                  class="btn btn-sm btn-outline-primary py-0 px-2"
+                  :title="__('Show this category on the chart')"
+                  :aria-label="__('Show this category on the chart')"
                   @click="$emit('focus-category', unit.category_id)"
                 >
                   <i class="fa fa-fw fa-chart-line"></i>
-                  {{ __('Show this category on the chart') }}
                 </button>
                 <button
+                  v-if="group.verdict === 'no_drift'"
                   type="button"
-                  class="btn btn-sm btn-outline-danger py-0"
+                  class="btn btn-sm btn-outline-danger py-0 px-2"
+                  :title="__('Stop monitoring this category')"
+                  :aria-label="__('Stop monitoring this category')"
                   @click="stopMonitoring(unit)"
                 >
                   <i class="fa fa-fw fa-bell-slash"></i>
-                  {{ __('Stop monitoring this category') }}
                 </button>
-              </div>
-            </div>
-            <div v-else class="small text-muted">
-              {{ group.units.map((unit) => unit.category_name).join(', ') }}
-            </div>
+                <span
+                  v-else
+                  class="btn btn-sm py-0 px-2 invisible"
+                  aria-hidden="true"
+                  ><i class="fa fa-fw fa-bell-slash"></i
+                ></span>
+              </li>
+            </ul>
           </div>
         </details>
       </template>
@@ -384,7 +394,7 @@
     // focus-category: the user asked to show a category on the chart; apply: open the prefilled budget form;
     // result: a run finished (series may be null); reload is set when the page should also
     // load the chart for the same categories
-    emits: ['focus-category', 'apply', 'result'],
+    emits: ['focus-category', 'apply', 'result', 'series-state'],
 
     data() {
       const prefs = loadPrefs();
@@ -407,6 +417,8 @@
         expanded: {},
         // categories whose monitoring was switched off from this list
         stopped: [],
+        // categories whose recommendation was applied: listed under "Budget changed recently"
+        applied: [],
         // suggestion key => picked candidate budget_id
         picked: {},
         // the unit whose form is open, dropped from the list once the budget is saved
@@ -428,14 +440,19 @@
           (unit) =>
             unit.suggestion &&
             !this.hidden.includes(unit.suggestion.key) &&
+            !this.applied.includes(unit.category_id) &&
             !this.stopped.includes(unit.category_id),
         );
       },
       groups() {
         return groupUnitsByVerdict(
-          (this.result?.units || []).filter(
-            (unit) => !this.stopped.includes(unit.category_id),
-          ),
+          (this.result?.units || [])
+            .filter((unit) => !this.stopped.includes(unit.category_id))
+            .map((unit) =>
+              this.applied.includes(unit.category_id)
+                ? { ...unit, verdict: 'cooldown' }
+                : unit,
+            ),
         );
       },
     },
@@ -483,6 +500,7 @@
             this.hidden = [];
             this.expanded = {};
             this.stopped = [];
+            this.applied = [];
             this.picked = {};
             data.units.forEach((unit) => {
               if (unit.suggestion) {
@@ -501,6 +519,7 @@
               return;
             }
             this.result = null;
+            this.$emit('series-state', 'done');
             this.error =
               error.response?.data?.message ||
               __('Failed to run the budget check: :error', {
@@ -520,6 +539,7 @@
       loadSeries() {
         const categoryIds = this.getSelectedCategoryIds();
         const generation = ++this.generation;
+        this.$emit('series-state', 'loading');
         return window.axios
           .get(window.route('api.v1.reports.budget-suggestions'), {
             params: {
@@ -541,6 +561,7 @@
               return;
             }
             this.$emit('result', { series: null, categoryIds: null });
+            this.$emit('series-state', 'failed');
           });
       },
 
@@ -583,7 +604,7 @@
         ) {
           return false;
         }
-        this.hide(this.applying);
+        this.applied.push(this.applying.category_id);
         this.applying = null;
         return true;
       },

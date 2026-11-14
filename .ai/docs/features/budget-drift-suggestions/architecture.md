@@ -50,6 +50,9 @@ Both endpoints are API controller actions with ability middleware: the report en
 
 - Sensitivity and bias are remembered in `localStorage`; the data-through month is not.
 - Clicking a recommendation re-selects its category in the tree and runs a second single-category request to get the series. The recommended line shows only while the loaded chart covers exactly the checked categories, and is dropped after a budget is saved.
+- A recommendation applied via "Create new budget period" moves to the "Budget changed recently" group (it is not hidden); a rerun recomputes it.
+- Every group under "Categories without a recommendation" is one line per category with a chart button; only "No drift" also has "Stop monitoring".
+- The chart's "Budget + schedules" line is budget plus the forecast (schedule) bars, the same basis as the recommended line; the chart zooms to the full data range after every data update.
 - The recommended series assumes the top-ranked candidate and is not refetched when another row is picked.
 - The moving average is the mean of the last 12 months / 4 quarters / 5 years of complete periods (history counted from the first actual), so it equals L only when the chart is at the unit's granularity and `data_through` is the last complete month.
 

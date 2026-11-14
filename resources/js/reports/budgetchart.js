@@ -160,6 +160,7 @@ let chart,
   seriesActual,
   seriesForecast,
   seriesBudget,
+  seriesExpected,
   seriesMovingAverage,
   seriesRecommended,
   scrollbarX;
@@ -265,6 +266,26 @@ function initChart() {
   seriesBudget.tooltipText = '[bold]' + __('Budget') + ':[/] {valueY}';
   seriesBudget.tooltip.getFillFromObject = false;
   seriesBudget.tooltip.background.fill = colorForecastStroke;
+
+  // Budgets and schedules add up: the forecast bars are not part of the budget but extend it,
+  // so this line is the budget plus the schedules, i.e. the total expectation of the period.
+  seriesExpected = chart.series.push(new am4charts.LineSeries());
+  seriesExpected.strokeWidth = 3;
+  seriesExpected.fill = colorForecastStroke;
+  seriesExpected.stroke = colorForecastStroke;
+  seriesExpected.dataFields.valueY = 'expected';
+  seriesExpected.dataFields.dateX = 'date';
+  seriesExpected.name = __('Budget + schedules');
+  seriesExpected.tooltipText =
+    '[bold]' +
+    __('Budget + schedules') +
+    ':[/] {valueY}\n' +
+    __('Budget') +
+    ': {budget}\n' +
+    __('Forecast') +
+    ': {forecast}';
+  seriesExpected.tooltip.getFillFromObject = false;
+  seriesExpected.tooltip.background.fill = colorForecastStroke;
 
   // Budget suggestions: the expectation (budget plus forecast) with the open recommendations
   // applied. Only filled after a check of the same categories as the loaded chart.
@@ -662,7 +683,11 @@ function updateChart(rawData) {
   // Add moving average (knowing that data is ordered)
   data = computeMovingAverage(data, aggregation);
   // Month rows are shared with rawData: drop values of an earlier recommendation
-  data.forEach((row) => delete row.recommended);
+  data.forEach((row) => {
+    delete row.recommended;
+    const expected = (row.budget || 0) + (row.forecast || 0);
+    row.expected = expected === 0 ? null : expected;
+  });
   if (showsRecommended()) {
     applyRecommended(data, aggregation, rawData, recommended.byMonth);
   }
@@ -670,6 +695,11 @@ function updateChart(rawData) {
   // Update the chart settings
   chart.data = data;
   chart.invalidateData();
+  // Always show the whole range of the new data (the earlier zoom could hide the added months)
+  chart.events.once('datavalidated', () => {
+    dateAxis.zoom({ start: 0, end: 1 }, true, true);
+    chart.yAxes.getIndex(0).zoom({ start: 0, end: 1 }, true, true);
+  });
 }
 
 // Attach event listener to refresh button
@@ -758,13 +788,32 @@ function dropAppliedSuggestion(budget) {
   }
 }
 
+// Badge on the chart while the (slower) recommended series is still being calculated
+function setRecommendationStatus(state) {
+  const badge = document.getElementById('recommendation-status');
+  const failed = state === 'failed';
+  badge.classList.toggle('d-none', state === 'done');
+  badge.classList.toggle('text-bg-primary', !failed);
+  badge.classList.toggle('text-bg-warning', failed);
+  badge.replaceChildren();
+  if (!failed) {
+    const spinner = document.createElement('span');
+    spinner.className = 'spinner-border spinner-border-sm me-2';
+    spinner.setAttribute('aria-hidden', 'true');
+    badge.append(spinner);
+  }
+  badge.append(failed ? badge.dataset.failedText : badge.dataset.loadingText);
+}
+
 // Budget check panel (its own Vue island above the chart)
 const suggestionsApp = createApp(BudgetSuggestions, {
   getSelectedCategoryIds,
   getDefaultAggregation: (id) =>
     $(treeSelector).jstree(true)?.get_node(String(id))?.original
       ?.default_aggregation,
+  onSeriesState: (state) => setRecommendationStatus(state),
   onResult: ({ series, categoryIds, reload }) => {
+    setRecommendationStatus('done');
     recommended =
       series && categoryIds
         ? { key: categoryKey(categoryIds), byMonth: indexSeries(series) }

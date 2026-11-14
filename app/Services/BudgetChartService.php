@@ -231,8 +231,9 @@ class BudgetChartService
             ];
         });
 
-        // FR-2 #2: all active standalone Budget rows for the requested categories, regardless of
-        // account_id - an account-scoped row and an account-agnostic row for the same category
+        // FR-2 #2: all standalone Budget rows for the requested categories - closed ones (no
+        // occurrence left, active = false) included, since their past periods are still history
+        // the chart must show - regardless of account_id - an account-scoped row and an account-agnostic row for the same category
         // are both included, by design (see background.md "Account Scoping for Budgets") - unless
         // the report's own account-scope filter narrows this down: 'selected' keeps only that
         // account's own budgets, 'none' keeps only account-agnostic budgets (mirroring
@@ -241,7 +242,6 @@ class BudgetChartService
         // and 'any' (default) keeps the unfiltered FR-2 behaviour.
         $budgets = Budget::with(['category', 'account.config.currency'])
             ->where('user_id', $user->id)
-            ->where('active', true)
             ->whereIn('category_id', $categories->pluck('id'))
             ->when($accountSelection === 'selected' && $accountEntity, fn ($query) => $query->where('account_id', $accountEntity))
             ->when($accountSelection === 'none', fn ($query) => $query->whereNull('account_id'))
