@@ -1904,6 +1904,8 @@
     "Failed to run the budget check: :error": "Nie udało się sprawdzić budżetu: :error",
     "Budget suggestions are off for :category. Switch them back on in the category settings.": "Sugestie budżetu są wyłączone dla kategorii :category. Możesz je włączyć ponownie w ustawieniach kategorii.",
     "Failed to update the category: :error": "Nie udało się zaktualizować kategorii: :error",
+    "Budgets with a longer cadence than the selected view (for example a yearly budget in the monthly view) are spread evenly over the months they cover, so the chart shows only a part of them in each period.": "Budżety o dłuższej częstotliwości niż wybrany widok (na przykład budżet roczny w widoku miesięcznym) są rozłożone równomiernie na miesiące, które obejmują, dlatego wykres pokazuje w każdym okresie tylko ich część.",
+    "Re-evaluate, ignoring the recent budget change": "Oceń ponownie, ignorując niedawną zmianę budżetu",
     "Budżety o dłuższej cykliczności niż wybrany widok (na przykład budżet roczny w widoku miesięcznym) są rozłożone równomiernie na miesiące, które obejmują, dlatego wykres pokazuje w każdym okresie tylko ich część.": "Budżety o dłuższej cykliczności niż wybrany widok (na przykład budżet roczny w widoku miesięcznym) są rozłożone równomiernie na miesiące, które obejmują, dlatego wykres pokazuje w każdym okresie tylko ich część.",
     "Oceń ponownie, ignorując niedawną zmianę budżetu": "Oceń ponownie, ignorując niedawną zmianę budżetu",
     "Budget + schedules": "Budżet + harmonogramy",
