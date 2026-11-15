@@ -25,6 +25,11 @@ class BudgetSuggestionsRequest extends FormRequest
                 'integer',
                 Rule::exists('categories', 'id')->where('user_id', $this->user()->id),
             ],
+            'ignore_cooldown_ids' => ['nullable', 'array'],
+            'ignore_cooldown_ids.*' => [
+                'integer',
+                Rule::exists('categories', 'id')->where('user_id', $this->user()->id),
+            ],
             'all' => ['nullable', 'boolean'],
             'data_through' => ['nullable', 'date_format:Y-m'],
             'sensitivity' => ['nullable', Rule::in(array_keys(config('yaffa.budget_suggestions.sensitivity')))],

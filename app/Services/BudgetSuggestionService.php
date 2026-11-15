@@ -43,6 +43,7 @@ class BudgetSuggestionService
 
     /**
      * @param int[]|null $categoryIds Explicit categories, or null to review all active, non-excluded ones
+     * @param int[] $ignoreCooldownIds Categories judged even though a Budget row started recently (user-forced re-evaluation)
      * @param string|null $dataThrough A month (Y-m); defaults to the last complete month, never the current one
      * @return array{run: array<string, mixed>, units: array<int, array<string, mixed>>, series: array<int, array<string, mixed>>|null}
      */
@@ -52,6 +53,7 @@ class BudgetSuggestionService
         ?string $dataThrough = null,
         ?string $sensitivity = null,
         ?string $bias = null,
+        array $ignoreCooldownIds = [],
     ): array {
         $cfg = config('yaffa.budget_suggestions');
         $sensitivity = array_key_exists((string) $sensitivity, $cfg['sensitivity']) ? $sensitivity : $cfg['default_sensitivity'];
@@ -83,6 +85,7 @@ class BudgetSuggestionService
             'agg' => $aggregate['categories'],
             'missing' => $aggregate['missingRatePeriods'],
             'categories' => $categories,
+            'ignoreCooldown' => array_flip($ignoreCooldownIds),
         ];
         $c['avgMonthly'] = $this->averageMonthlyExpenses($c);
         $c['floor'] = $cfg['materiality_floor_share'] * $c['avgMonthly'];
@@ -434,7 +437,7 @@ class BudgetSuggestionService
 
         // Cooldown: a contributing Budget row started within the last M periods, or starts in the future
         $currentStart = $this->periodStart($this->idx($c['today']), $m);
-        if (!$isNew) {
+        if (!$isNew && !isset($c['ignoreCooldown'][$unit['root']->id])) {
             $boundary = $currentStart - $cfg['cooldown'][$g] * $m;
             if ($rows->contains(fn (Budget $b) => $this->idx($b->start_date) >= $boundary)) {
                 return $this->verdict('cooldown', $m);

@@ -1904,6 +1904,8 @@
     "Failed to run the budget check: :error": "Failed to run the budget check: :error",
     "Budget suggestions are off for :category. Switch them back on in the category settings.": "Budget suggestions are off for :category. Switch them back on in the category settings.",
     "Failed to update the category: :error": "Failed to update the category: :error",
+    "Budgets with a longer cadence than the selected view (for example a yearly budget in the monthly view) are spread evenly over the months they cover, so the chart shows only a part of them in each period.": "Budgets with a longer cadence than the selected view (for example a yearly budget in the monthly view) are spread evenly over the months they cover, so the chart shows only a part of them in each period.",
+    "Re-evaluate, ignoring the recent budget change": "Re-evaluate, ignoring the recent budget change",
     "Budget + schedules": "Budget + schedules",
     "Calculating recommendation...": "Calculating recommendation...",
     "Recommendation unavailable": "Recommendation unavailable",

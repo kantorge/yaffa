@@ -118,6 +118,9 @@
             </div>
             <div class="card-body position-relative">
                 <div id="chartdiv" style="width:100%;height:500px;"></div>
+                <div id="budget-spread-note" class="small text-muted mt-2 d-none">
+                    <i class="fa fa-info-circle me-1"></i>{{ __('Budgets with a longer cadence than the selected view (for example a yearly budget in the monthly view) are spread evenly over the months they cover, so the chart shows only a part of them in each period.') }}
+                </div>
                 <span
                     id="recommendation-status"
                     class="position-absolute top-0 end-0 m-2 badge fs-6 fw-normal text-bg-primary shadow-sm d-none"

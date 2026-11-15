@@ -37,6 +37,7 @@ import BudgetForm from '@/reports/components/BudgetForm.vue';
 import BudgetQuickView from '@/reports/components/BudgetQuickView.vue';
 import BudgetSuggestions from '@/reports/components/BudgetSuggestions.vue';
 import { computeMovingAverage } from '@/reports/movingAverage';
+import { spreadBudget } from '@/reports/budgetSpread';
 import { applyRecommended, indexSeries } from '@/reports/budgetSuggestions';
 import { installRouteGlobal } from '@/shared/lib/vue/installRouteGlobal';
 
@@ -497,7 +498,10 @@ function showsRecommended() {
 }
 
 function updateChart(rawData) {
+  const spreadNote = document.getElementById('budget-spread-note');
+
   if (rawData.length === 0) {
+    spreadNote.classList.add('d-none');
     chart.data = [];
     chart.invalidateData();
     return;
@@ -507,6 +511,14 @@ function updateChart(rawData) {
     document.querySelector('input[name="chart_time_interval"]:checked')
       ?.value || 'month';
   let data;
+
+  // Budgets with a cadence longer than the view are spread over the months they cover
+  const spreadResult = spreadBudget(
+    rawData,
+    { month: 1, quarter: 3, year: 12 }[aggregation],
+  );
+  rawData = spreadResult.rows;
+  spreadNote.classList.toggle('d-none', !spreadResult.spread);
 
   // A category without budget or schedule has no rows after its last actual: add the months the
   // recommended line covers

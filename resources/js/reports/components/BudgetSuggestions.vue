@@ -375,7 +375,22 @@
                     <i class="fa fa-fw fa-chart-line"></i>
                   </button>
                   <button
-                    v-if="group.verdict === 'no_drift'"
+                    v-if="group.verdict === 'cooldown'"
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary py-0 px-2"
+                    :title="
+                      __('Re-evaluate, ignoring the recent budget change')
+                    "
+                    :aria-label="
+                      __('Re-evaluate, ignoring the recent budget change')
+                    "
+                    :disabled="loading"
+                    @click="forceReevaluate(unit)"
+                  >
+                    <i class="fa fa-fw fa-rotate"></i>
+                  </button>
+                  <button
+                    v-else-if="group.verdict === 'no_drift'"
                     type="button"
                     class="btn btn-sm btn-outline-danger py-0 px-2"
                     :title="__('Stop monitoring this category')"
@@ -501,12 +516,16 @@
     },
 
     methods: {
-      run(mode, ids = null) {
+      // forced: categories judged although their budget changed recently (see forceReevaluate)
+      run(mode, ids = null, forced = []) {
         const params = {
           data_through: this.dataThrough,
           sensitivity: this.sensitivity,
           bias: this.bias,
         };
+        if (forced.length > 0) {
+          params.ignore_cooldown_ids = forced;
+        }
         const categoryIds = ids ?? this.getSelectedCategoryIds();
         if (mode === 'all') {
           params.all = 1;
@@ -524,7 +543,11 @@
         this.error = null;
         this.generation++;
         const token = ++this.runToken;
-        this.lastRun = { mode, ids: mode === 'all' ? null : categoryIds };
+        this.lastRun = {
+          mode,
+          ids: mode === 'all' ? null : categoryIds,
+          forced,
+        };
 
         return window.axios
           .get(window.route('api.v1.reports.budget-suggestions'), {
@@ -590,6 +613,7 @@
               data_through: this.result?.run.data_through,
               sensitivity: this.runOptions.sensitivity,
               bias: this.runOptions.bias,
+              ignore_cooldown_ids: this.lastRun?.forced,
             },
             timeout: 60000,
           })
@@ -677,7 +701,11 @@
             // Descendants rolled into this unit are excluded too: rerun the check so the list
             // and the chart's recommended series no longer count them
             if (this.lastRun) {
-              this.run(this.lastRun.mode, this.lastRun.ids);
+              this.run(
+                this.lastRun.mode,
+                this.lastRun.ids,
+                this.lastRun.forced,
+              );
             }
             toastHelpers.showSuccessToast(
               __(
@@ -695,6 +723,17 @@
               }),
             );
           });
+      },
+
+      // Rerun the displayed check with this category judged despite its recent budget change
+      forceReevaluate(unit) {
+        if (!this.lastRun) {
+          return;
+        }
+        this.run(this.lastRun.mode, this.lastRun.ids, [
+          ...this.lastRun.forced,
+          unit.category_id,
+        ]);
       },
 
       aggregationDiffers(unit) {

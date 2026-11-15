@@ -142,6 +142,16 @@ it('gives cooldown while a contributing budget started recently', function () {
     expect(unitFor(review([$category->id]), $category)['verdict'])->toBe('cooldown');
 });
 
+it('judges a unit in cooldown anyway when its category is forced', function () {
+    $category = newCategory();
+    budgetRow($category, ['start_date' => '2026-10-01']);
+    spendMonthly($category, '2025-12', '2026-11', 40000);
+
+    $result = app(BudgetSuggestionService::class)->run(test()->user, [$category->id], null, null, null, [$category->id]);
+
+    expect(unitFor($result, $category)['verdict'])->not->toBe('cooldown');
+});
+
 it('does not trigger on a gap that exists only in the past', function () {
     $category = newCategory();
     budgetRow($category);

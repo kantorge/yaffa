@@ -58,6 +58,7 @@ class ReportApiController extends Controller
                 $request->validated('data_through'),
                 $request->validated('sensitivity'),
                 $request->validated('bias'),
+                array_map('intval', $request->validated('ignore_cooldown_ids') ?? []),
             );
         } catch (InvalidArgumentException $e) {
             // The user has no base currency yet.
