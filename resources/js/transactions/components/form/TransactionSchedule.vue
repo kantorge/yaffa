@@ -22,11 +22,14 @@
           <h6 class="text-muted text-uppercase small mb-2">
             {{ __('Pattern') }}
           </h6>
-          <div class="mb-3" :class="hasError('frequency') ? 'has-error' : ''">
-            <label class="form-label d-block">
+          <div
+            class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 mb-3"
+            :class="hasError('frequency') ? 'has-error' : ''"
+          >
+            <label class="form-label mb-0 text-nowrap">
               {{ __('Repeats every') }}
             </label>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-grow-1">
               <input
                 :id="'schedule_interval_' + $.vnode.key"
                 v-model="intervalInput"
@@ -1014,8 +1017,14 @@
 <style scoped>
   .schedule-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
     gap: 1rem;
+  }
+
+  /* Let grid items shrink below their content width (date inputs, input groups) */
+  .schedule-groups > *,
+  .field-grid > * {
+    min-width: 0;
   }
 
   .field-grid {
@@ -1027,9 +1036,16 @@
 
   /* Range's four fields (start/next/count/end) always read as a 2x2 block,
      rather than auto-fit letting a third column squeeze in and leave one
-     field wrapped onto its own row. */
+     field wrapped onto its own row. A single column on phones, where two
+     don't fit. */
   .field-grid-2col {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 576px) {
+    .field-grid-2col {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .schedule-interval-input {
