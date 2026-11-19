@@ -65,6 +65,9 @@ use Illuminate\Support\Facades\Cache;
  * @method static Builder|Transaction whereUpdatedAt($value)
  * @method static Builder|Transaction whereUserId($value)
  * @property int|null $ai_document_id
+ * @property int|null $settles_transaction_id
+ * @property-read Transaction|null $settlementTransfer
+ * @property-read Transaction|null $settles
  * @property-read Money|null $cashflow_value
  * @property-write Money|string|int|float|null $cashflow_value
  * @property float|null $currencyRateToBase
@@ -172,6 +175,22 @@ class Transaction extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    /**
+     * The transfer created together with this investment transaction, moving its cash to or from the settlement account.
+     */
+    public function settlementTransfer(): HasOne
+    {
+        return $this->hasOne(self::class, 'settles_transaction_id');
+    }
+
+    /**
+     * For a settlement transfer: the investment transaction it settles.
+     */
+    public function settles(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'settles_transaction_id');
     }
 
     public function origins(): HasMany
@@ -323,6 +342,7 @@ class Transaction extends Model
             'config.investment',
             'currency',
             'transactionSchedule',
+            'settlementTransfer:id,settles_transaction_id',
         ]);
     }
 

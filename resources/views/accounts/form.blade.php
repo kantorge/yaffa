@@ -156,6 +156,48 @@
             </div>
 
             <div class="row mb-3">
+                <label for="settlement_account_id" class="col-form-label col-sm-3">
+                    {{ __('Settles into') }}
+                </label>
+                <div class="col-sm-9">
+                    <div class="input-group">
+                        <select
+                            class="form-select"
+                            id="settlement_account_id"
+                            name="config[settlement_account_id]"
+                        >
+                            <option value="">{{ __('— None —') }}</option>
+                            @foreach ($allSettlementAccounts as $id => $name)
+                                <option
+                                    value="{{ $id }}"
+                                    @if (old())
+                                        @if (old('config.settlement_account_id') == $id)
+                                            selected="selected"
+                                        @endif
+                                    @elseif(isset($account))
+                                        @if (($account->config->settlement_account_id ?? null) == $id)
+                                            selected="selected"
+                                        @endif
+                                    @endif
+                                >
+                                    {{ $name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button
+                            type="button"
+                            class="btn btn-outline-info"
+                            data-coreui-toggle="tooltip"
+                            data-coreui-placement="top"
+                            title="{{ __('For an account in a foreign currency: the account in your default currency that its cash is moved to. Investment transactions in this account can then record the settlement transfer in the same step.') }}"
+                        >
+                            <i class="fa fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <label for="alias" class="col-form-label col-sm-3">
                     {{ __('Import alias') }}
                 </label>

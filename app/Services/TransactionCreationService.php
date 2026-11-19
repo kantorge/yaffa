@@ -35,19 +35,22 @@ class TransactionCreationService
 
     public function __construct(
         private TransactionItemMergeService $mergeService,
+        private InvestmentSettlementService $settlementService,
     ) {
     }
 
     /**
      * @param 'standard'|'investment' $configType
      *
-     * @return array{transaction: Transaction, category_learning_summary: ?array}
+     * @return array{transaction: Transaction, category_learning_summary: ?array, settlement_transaction: ?Transaction}
      *
      * @throws ValidationException
      */
     public function create(string $configType, array $validated, User $user): array
     {
-        $transaction = DB::transaction(function () use ($configType, $validated, $user): Transaction {
+        $settlementTransfer = null;
+
+        $transaction = DB::transaction(function () use ($configType, $validated, $user, &$settlementTransfer): Transaction {
             // Claim the AI document first, so its row lock is held until the transaction is committed
             $this->markAiDocumentFinalized($validated, $user);
 
@@ -79,6 +82,11 @@ class TransactionCreationService
             // alongside a source schedule that never actually caught up.
             $this->handleSourceTransactionUpdates($validated, $user);
 
+            // Same database transaction: the investment transaction and its settlement transfer are saved together or not at all
+            if ($configType === 'investment' && ! empty($validated['settlement']['amount'])) {
+                $settlementTransfer = $this->settlementService->createTransfer($transaction, (string) $validated['settlement']['amount']);
+            }
+
             return $transaction;
         });
 
@@ -96,9 +104,14 @@ class TransactionCreationService
 
         event(new TransactionCreated($transaction));
 
+        if ($settlementTransfer !== null) {
+            event(new TransactionCreated($settlementTransfer));
+        }
+
         return [
             'transaction' => $transaction,
             'category_learning_summary' => $categoryLearningSummary,
+            'settlement_transaction' => $settlementTransfer,
         ];
     }
 

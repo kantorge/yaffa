@@ -3,8 +3,30 @@ import MathInput from '@/shared/ui/form/MathInput.vue';
 import { initializeBootstrapTooltips } from '@/shared/lib/helpers';
 import { warnOnCurrencyChange } from '@/shared/lib/ui/currencyChangeWarning';
 import { __ } from '@/shared/lib/i18n';
+import { createLocalSelect } from '@/shared/lib/tom-select';
 
 initializeBootstrapTooltips();
+
+// Type-to-filter for the settlement account; the server already lists only the eligible (active) accounts
+const settlementSelect = document.getElementById('settlement_account_id');
+if (settlementSelect) {
+  const accounts = [...settlementSelect.options]
+    .filter((option) => option.value !== '')
+    .map((option) => ({ id: option.value, text: option.text.trim() }));
+
+  createLocalSelect(settlementSelect, {
+    suggestions: () => [
+      { id: 'accounts', label: __('Accounts'), items: accounts },
+    ],
+    search: (term) => {
+      const needle = term.trim().toLowerCase();
+      return accounts.filter((account) =>
+        account.text.toLowerCase().includes(needle),
+      );
+    },
+    placeholder: __('— None —'),
+  });
+}
 
 const currencySelect = document.getElementById('currency_id');
 if (currencySelect) {
