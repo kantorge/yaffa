@@ -12,6 +12,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvestmentController;
 use App\Http\Controllers\InvestmentGroupController;
 use App\Http\Controllers\InvestmentPriceController;
+use App\Http\Controllers\RechargeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TagController;
@@ -126,6 +127,12 @@ Route::get('/reports/schedule', [ReportController::class, 'getSchedules'])->name
 Route::get('/reports/transactions', [ReportController::class, 'transactionsByCriteria'])
     ->name('reports.transactions');
 Route::get('/reports/timeline', [ReportController::class, 'investmentTimeline'])->name('reports.investment_timeline');
+Route::get('/reports/recharges/untagged', [RechargeController::class, 'untagged'])
+    ->name('reports.recharges.untagged');
+Route::get('/reports/recharges/open', [RechargeController::class, 'openTags'])
+    ->name('reports.recharges.open');
+Route::post('/reports/recharges/deactivate-settled', [RechargeController::class, 'deactivateSettled'])
+    ->name('reports.recharges.deactivate-settled');
 
 /**
  * Miscellanous routes

@@ -63,7 +63,7 @@ class ReferenceDataApiController extends Controller
                     'category_id' => $e->config instanceof Payee ? $e->config->category_id : null,
                 ])->values(),
             'categories' => $this->changedSince(Category::query()->where('user_id', $user->id), $since)->orderBy('id')->get()
-                ->map(fn (Category $c) => ['id' => $c->id, 'name' => $c->name, 'active' => (bool) $c->active, 'parent_id' => $c->parent_id])->values(),
+                ->map(fn (Category $c) => ['id' => $c->id, 'name' => $c->name, 'active' => (bool) $c->active, 'parent_id' => $c->parent_id, 'tag_requirement' => $c->tag_requirement->value])->values(),
             'tags' => $this->changedSince(Tag::query()->where('user_id', $user->id), $since)->orderBy('id')->get()
                 ->map(fn (Tag $t) => ['id' => $t->id, 'name' => $t->name, 'active' => (bool) $t->active])->values(),
             'investments' => $this->changedSince(Investment::query()->where('user_id', $user->id), $since)->orderBy('id')->get(['id', 'name', 'symbol', 'currency_id', 'active'])

@@ -63,6 +63,7 @@
             :match_type="item.match_type || null"
             :confidence_score="item.confidence_score || null"
             :tags="item.tags || []"
+            :tag-reminder="tagReminder"
             :comment="item.comment"
             :currency-symbol="currencySymbol"
             :remaining-amount="remainingAmount"
@@ -135,6 +136,11 @@
       defaultCategoryId: {
         type: [Number, String],
         default: null,
+      },
+      // Show the "expects a tag" hint on items; off for schedules and templates
+      tagReminder: {
+        type: Boolean,
+        default: true,
       },
       enabled: {
         type: Boolean,

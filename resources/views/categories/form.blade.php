@@ -161,6 +161,23 @@
                     </select>
                 </div>
             </div>
+            @if (auth()->user()->recharge_tags_enabled)
+            <div class="row mb-3">
+                <label for="tag_requirement" class="col-form-label col-sm-3">
+                    {{ __('Tag requirement') }}
+                </label>
+                <div class="col-sm-9">
+                    @php
+                        $currentTagRequirement = old('tag_requirement', isset($category) ? $category->tag_requirement->value : 'none');
+                    @endphp
+                    <select class="form-control" id="tag_requirement" name="tag_requirement">
+                        <option value="none" @selected($currentTagRequirement === 'none')>{{ __('No tag required') }}</option>
+                        <option value="required" @selected($currentTagRequirement === 'required')>{{ __('Requires a tag') }}</option>
+                        <option value="required_nil" @selected($currentTagRequirement === 'required_nil')>{{ __('Requires a tag - expect nil') }}</option>
+                    </select>
+                </div>
+            </div>
+            @endif
         </div>
         <div class="card-footer text-end">
             @csrf

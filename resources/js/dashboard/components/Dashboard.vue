@@ -17,6 +17,7 @@
       <payee-category-recommendation></payee-category-recommendation>
       <transaction-templates></transaction-templates>
       <ai-document-summary></ai-document-summary>
+      <recharge-summary></recharge-summary>
     </div>
     <!-- /.col -->
 
@@ -37,6 +38,7 @@
   import OnboardingCard from './widgets/OnboardingCard.vue';
   import AiDocumentSummary from './widgets/AiDocumentSummary.vue';
   import TransactionTemplates from './widgets/TransactionTemplates.vue';
+  import RechargeSummary from './widgets/RechargeSummary.vue';
 
   export default {
     components: {
@@ -47,6 +49,7 @@
       'onboarding-card': OnboardingCard,
       'ai-document-summary': AiDocumentSummary,
       'transaction-templates': TransactionTemplates,
+      'recharge-summary': RechargeSummary,
     },
   };
 </script>

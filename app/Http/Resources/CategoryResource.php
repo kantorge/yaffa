@@ -24,6 +24,7 @@ class CategoryResource extends JsonResource
             'active' => $this->active,
             'parent_id' => $this->parent_id,
             'default_aggregation' => $this->default_aggregation,
+            'tag_requirement' => $this->tag_requirement->value,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

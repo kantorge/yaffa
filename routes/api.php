@@ -27,6 +27,7 @@ use App\Http\Controllers\API\MetaApiController;
 use App\Http\Controllers\API\OnboardingApiController;
 use App\Http\Controllers\API\PayeeApiController;
 use App\Http\Controllers\API\PayeeStatsApiController;
+use App\Http\Controllers\API\RechargeApiController;
 use App\Http\Controllers\API\ReferenceDataApiController;
 use App\Http\Controllers\API\ReportApiController;
 use App\Http\Controllers\API\SummaryApiController;
@@ -364,6 +365,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         ->name('reports.budget-chart');
     Route::get('/reports/cashflow', [ReportApiController::class, 'getCashflowData'])
         ->name('reports.cashflow');
+    Route::get('/reports/recharges/summary', [RechargeApiController::class, 'summary'])
+        ->name('reports.recharges.summary');
     Route::get(
         '/reports/waterfall/{transactionType}/{dataType}/{year}/{month?}',
         [ReportApiController::class, 'getCategoryWaterfallData']

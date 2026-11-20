@@ -219,6 +219,68 @@
             />
           </div>
         </div>
+        <div class="row">
+          <label for="recharge_tags_enabled" class="col-form-label col-sm-3">
+            {{ __('Recharge tags') }}
+          </label>
+          <div class="col-sm-9">
+            <div class="input-group">
+              <div class="input-group-text">
+                <input
+                  id="recharge_tags_enabled"
+                  v-model="form.recharge_tags_enabled"
+                  class="form-check-input mt-0"
+                  type="checkbox"
+                  name="recharge_tags_enabled"
+                  data-testid="user-settings-recharge-tags-enabled"
+                />
+              </div>
+              <span
+                class="input-group-text btn btn-outline-input-info"
+                data-coreui-toggle="tooltip"
+                data-coreui-placement="top"
+                :title="
+                  __(
+                    'Track purchases made on behalf of someone else. Enables the tag requirement setting on categories, the save reminder and the recharge reports.',
+                  )
+                "
+              >
+                <i class="fa fa-info-circle"></i>
+              </span>
+            </div>
+            <HasError field="recharge_tags_enabled" :form="form" />
+          </div>
+        </div>
+        <div v-if="form.recharge_tags_enabled" class="row">
+          <label for="recharge_backstop_date" class="col-form-label col-sm-3">
+            {{ __('Recharge backstop date') }}
+          </label>
+          <div class="col-sm-9">
+            <div class="input-group">
+              <input
+                id="recharge_backstop_date"
+                v-model="backstopDateInput"
+                class="form-control"
+                type="date"
+                name="recharge_backstop_date"
+                data-testid="user-settings-recharge-backstop-date"
+              />
+              <span
+                class="input-group-text btn btn-outline-input-info"
+                data-coreui-toggle="tooltip"
+                data-coreui-placement="top"
+                :title="
+                  __(
+                    'Recharge activity before this date is hidden from the recharge reports. Leave empty to show everything.',
+                  )
+                "
+              >
+                <i class="fa fa-info-circle"></i>
+              </span>
+            </div>
+            <HasError field="recharge_backstop_date" :form="form" />
+          </div>
+        </div>
       </div>
       <div class="card-footer">
         <SubmitButton class="btn btn-primary" :form="form">
@@ -274,6 +336,10 @@
         auto_merge_standard_transaction_items:
           window.YAFFA.userSettings.auto_merge_standard_transaction_items ||
           false,
+        recharge_tags_enabled:
+          window.YAFFA.userSettings.recharge_tags_enabled || false,
+        recharge_backstop_date:
+          window.YAFFA.userSettings.recharge_backstop_date || null,
       }),
     }),
     computed: {
@@ -283,6 +349,14 @@
         },
         set(value) {
           this.form.start_date = value || null;
+        },
+      },
+      backstopDateInput: {
+        get() {
+          return this.form.recharge_backstop_date || '';
+        },
+        set(value) {
+          this.form.recharge_backstop_date = value || null;
         },
       },
       endDateInput: {
@@ -318,6 +392,20 @@
                 response.data.data.account_details_date_range;
               window.YAFFA.userSettings.auto_merge_standard_transaction_items =
                 response.data.data.auto_merge_standard_transaction_items;
+
+              // The recharge menu and category field are server-rendered: they follow on the next page load
+              const rechargeChanged =
+                window.YAFFA.userSettings.recharge_tags_enabled !==
+                response.data.data.recharge_tags_enabled;
+              window.YAFFA.userSettings.recharge_tags_enabled =
+                response.data.data.recharge_tags_enabled;
+              window.YAFFA.userSettings.recharge_backstop_date =
+                response.data.data.recharge_backstop_date;
+              if (rechargeChanged) {
+                toastHelpers.showWarningToast(
+                  __('Refresh the page to update the menu.'),
+                );
+              }
 
               // Emit a custom event to global scope about the result
               toastHelpers.showSuccessToast(__('User settings updated'));

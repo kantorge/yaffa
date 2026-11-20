@@ -147,6 +147,24 @@ window.table = $(dataTableSelector).DataTable({
       className: 'text-center activeIcon',
     },
     {
+      data: 'tag_requirement',
+      title: __('Tag requirement'),
+      visible: !!window.YAFFA?.userSettings?.recharge_tags_enabled,
+      render: function (data, type) {
+        if (type !== 'display') {
+          return data;
+        }
+        if (data === 'required') {
+          return `<span class="badge bg-info">${__('Requires a tag')}</span>`;
+        }
+        if (data === 'required_nil') {
+          return `<span class="badge bg-info">${__('Requires a tag - expect nil')}</span>`;
+        }
+        return '';
+      },
+      className: 'text-center',
+    },
+    {
       // Display count of associated transactions, linking to the find-transactions
       // report filtered to this category
       data: 'transactions_count_regular',

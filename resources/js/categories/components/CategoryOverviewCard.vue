@@ -49,6 +49,25 @@
           <dd class="col-6 text-break">{{ category.description }}</dd>
         </template>
 
+        <template
+          v-if="
+            rechargeTagsEnabled &&
+            category.tag_requirement &&
+            category.tag_requirement !== 'none'
+          "
+        >
+          <dt class="col-6">{{ __('Tag requirement') }}</dt>
+          <dd class="col-6">
+            <span class="badge bg-info">
+              {{
+                category.tag_requirement === 'required_nil'
+                  ? __('Requires a tag - expect nil')
+                  : __('Requires a tag')
+              }}
+            </span>
+          </dd>
+        </template>
+
         <dt class="col-6">{{ __('Default aggregation') }}</dt>
         <dd class="col-6">{{ __(aggregationLabel) }}</dd>
 
@@ -118,6 +137,9 @@
       return { locale: window.YAFFA.userSettings.locale };
     },
     computed: {
+      rechargeTagsEnabled() {
+        return !!window.YAFFA?.userSettings?.recharge_tags_enabled;
+      },
       daysSinceLast() {
         if (!this.overview.last_date) {
           return null;

@@ -253,6 +253,16 @@ Breadcrumbs::for('reports.transactions', function (BreadcrumbTrail $trail) {
     $trail->push(__('Reports'));
     $trail->push(__('Transactions'), route('reports.transactions'));
 });
+Breadcrumbs::for('reports.recharges.untagged', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Reports'));
+    $trail->push(__('Missing recharge tags'), route('reports.recharges.untagged'));
+});
+Breadcrumbs::for('reports.recharges.open', function (BreadcrumbTrail $trail) {
+    $trail->parent('home');
+    $trail->push(__('Reports'));
+    $trail->push(__('Open recharge tags'), route('reports.recharges.open'));
+});
 Breadcrumbs::for('reports.investment_timeline', function (BreadcrumbTrail $trail) {
     $trail->parent('home');
     $trail->push(__('Investments'), route('investments.index'));

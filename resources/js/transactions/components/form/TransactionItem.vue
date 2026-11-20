@@ -152,6 +152,14 @@
           class="form-select tag"
           :data-testid="'transaction-item-tags-' + id"
         ></select>
+        <div
+          v-if="isMissingRequiredTag"
+          class="form-text text-warning"
+          :data-testid="'transaction-item-tag-required-' + id"
+        >
+          <i class="fa fa-triangle-exclamation"></i>
+          {{ __('This category expects a tag') }}
+        </div>
       </div>
       <div class="col-12 col-sm-3 form-group">
         <span class="form-label">
@@ -196,6 +204,7 @@
   } from '@/shared/lib/tom-select';
   import {
     loadSelectData,
+    loadTagRequiredCategoryIds,
     searchEntities,
     suggestCategories,
   } from '@/shared/lib/select-data';
@@ -216,6 +225,10 @@
       currencySymbol: String,
       comment: String,
       tags: Array,
+      tagReminder: {
+        type: Boolean,
+        default: true,
+      },
       remainingAmount: Number,
       payee: [Number, String],
       match_type: {
@@ -250,10 +263,23 @@
         isRecommendationAccepted: false,
         suggestionRemoved: false,
         learnRecommendation: this.match_type === 'exact' ? false : true,
+        tagRequiredCategoryIds: new Set(),
       };
     },
 
     computed: {
+      // The selected category expects a tag (e.g. a recharge claim number)
+      tagRequired() {
+        return (
+          this.tagReminder &&
+          this.tagRequiredCategoryIds.has(this.categoryIdData)
+        );
+      },
+
+      isMissingRequiredTag() {
+        return this.tagRequired && (this.tags || []).length === 0;
+      },
+
       /**
        * Determine which alert class to use based on match type and confidence
        */
@@ -363,6 +389,10 @@
     },
 
     mounted() {
+      loadTagRequiredCategoryIds().then((ids) => {
+        this.tagRequiredCategoryIds = ids;
+      });
+
       // Shared, memoized preload (the form usually has it already); null until it arrives
       this.selectData = null;
 
@@ -475,6 +505,12 @@
         loadSelectData()
           .then((data) => {
             this.selectData = data;
+            // The first lookup came back empty when the preload failed
+            loadTagRequiredCategoryIds().then((ids) => {
+              if (!this.unmounted) {
+                this.tagRequiredCategoryIds = ids;
+              }
+            });
             [this.categorySelect, this.tagSelect].forEach((select) => {
               if (!this.unmounted && select.isOpen) {
                 select.load(select.control_input.value);

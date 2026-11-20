@@ -85,6 +85,18 @@
                 iconClasses="fa-solid fa-chart-line"
                 text="{{ __('Cash flow') }}"
             />
+            @if (auth()->user()?->recharge_tags_enabled)
+            <x-nav-link
+                href="{{ route('reports.recharges.untagged') }}"
+                iconClasses="fa-solid fa-tags"
+                text="{{ __('Missing recharge tags') }}"
+            />
+            <x-nav-link
+                href="{{ route('reports.recharges.open') }}"
+                iconClasses="fa-solid fa-hand-holding-dollar"
+                text="{{ __('Open recharge tags') }}"
+            />
+            @endif
             <x-nav-link
                 href="{{ route('reports.investment_timeline') }}"
                 iconClasses="fa-solid fa-chart-gantt"
