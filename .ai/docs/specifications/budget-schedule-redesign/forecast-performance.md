@@ -6,7 +6,7 @@ This affects the account-balance and investment-value forecast calculation indep
 
 ## Reported Symptoms
 
-Production experience (self-hosted VPS: 4 vCPU Xeon E5, 4 GB RAM; local dev: Ryzen 9 HX, 32 GB RAM, WSL2 — dev is not meaningfully faster in practice) at approximately 25,000 transactions and 100 active schedules/budgets:
+Production experience (self-hosted VPS or local dev) at a larger-than-typical data volume:
 
 - Account balance recalculation: ~20-30 seconds.
 - Forecast recalculation: ~1-2 minutes.
@@ -15,7 +15,7 @@ This is what led to the existing precomputed/cached `account_monthly_summaries` 
 
 ## Root Cause
 
-Two specific, fixable inefficiencies, confirmed both by reading the implementation and by profiling a real recalculation run against the local dev database (user 1: 1,605 transactions, 21 active schedules, 11 investments — roughly 6-15x smaller than the reported production scale) via Telescope's `telescope_entries` table, correlating job execution windows with the queries each one issued:
+Two specific, fixable inefficiencies, confirmed both by reading the implementation and by profiling a real recalculation run against the local dev database (much smaller than the reported production scale) via Telescope's `telescope_entries` table, correlating job execution windows with the queries each one issued:
 
 ### 1. `Transaction::scheduleInstances()` called a full Eloquent clone per occurrence
 
@@ -48,9 +48,9 @@ Both are verified by regression tests asserting query count stays flat regardles
 
 ## Relationship to the Existing Caching Architecture
 
-If on-demand computation is fast enough, the current `account_monthly_summaries` precomputed table might eventually no longer be necessary *for correctness*. There may still be a separate, much smaller case for a short-TTL cache (e.g. Redis, already used for queues) purely for perceived snappiness when multiple widgets on the same page request the same forecast within a short window — but that is a materially different, simpler thing than today's fragile, user-facing, manually-recalculated summary table, and shouldn't be assumed necessary until actually measured.
+If on-demand computation is fast enough, the current `account_monthly_summaries` precomputed table might eventually no longer be necessary _for correctness_. There may still be a separate, much smaller case for a short-TTL cache (e.g. Redis, already used for queues) purely for perceived snappiness when multiple widgets on the same page request the same forecast within a short window — but that is a materially different, simpler thing than today's fragile, user-facing, manually-recalculated summary table, and shouldn't be assumed necessary until actually measured.
 
-**This is speculative, not a plan.** This redesign (specification.md, FR-9) only fixes the *forecast* calculation's performance; it does not remove, and is not a step toward removing, `account_monthly_summaries` — see specification.md's Non-Goals. Nothing here was profiled for the table's other job: caching *fact* data (the actual historical account balance and investment value, read by `AccountApiController::getAccountBalance` and `ReportApiController`'s cashflow queries). Whether that path could also be computed live, fast enough to retire the cache entirely, is unmeasured and is called out as a candidate for future investigation in [future-directions.md](future-directions.md).
+**This is speculative, not a plan.** This redesign (specification.md, FR-9) only fixes the _forecast_ calculation's performance; it does not remove, and is not a step toward removing, `account_monthly_summaries` — see specification.md's Non-Goals. Nothing here was profiled for the table's other job: caching _fact_ data (the actual historical account balance and investment value, read by `AccountApiController::getAccountBalance` and `ReportApiController`'s cashflow queries). Whether that path could also be computed live, fast enough to retire the cache entirely, is unmeasured and is called out as a candidate for future investigation in [future-directions.md](future-directions.md).
 
 ## Relationship to Future Scenarios
 

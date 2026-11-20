@@ -37,6 +37,26 @@ return [
         'min_app_version' => env('MOBILE_APP_MIN_VERSION', '0.0.0'),
     ],
     'idempotency_retention_days' => (int) env('IDEMPOTENCY_RETENTION_DAYS', 7),
+
+    // Budget drift review thresholds (see .ai/docs/specifications/budget-drift-suggestions/).
+    // Instance-wide and tuned in config only; sensitivity and bias are the user-facing run options.
+    'budget_suggestions' => [
+        'default_sensitivity' => 'medium',   // low | medium | high
+        'default_bias' => 'neutral',          // neutral | conservative | conservative_rounded
+        'min_history' => ['month' => 6, 'quarter' => 4, 'year' => 3],
+        'level_window' => ['month' => 12, 'quarter' => 4, 'year' => 5], // = chart moving average
+        'horizon' => ['month' => 12, 'quarter' => 4, 'year' => 2],
+        'cooldown' => ['month' => 3, 'quarter' => 2, 'year' => 1],
+        'sensitivity' => [
+            'low' => ['tolerance' => 0.20, 'persistence' => ['month' => [4, 4], 'quarter' => [2, 3], 'year' => [2, 2]]],
+            'medium' => ['tolerance' => 0.10, 'persistence' => ['month' => [3, 4], 'quarter' => [2, 3], 'year' => [2, 2]]],
+            'high' => ['tolerance' => 0.05, 'persistence' => ['month' => [2, 3], 'quarter' => [2, 3], 'year' => [2, 2]]],
+        ],
+        'materiality_floor_share' => 0.0,   // share of average monthly expenses; 0 = off; for a future scheduled-notification mode
+        'bias' => ['unfavorable_factor' => 0.75, 'favorable_factor' => 1.5, 'margin' => 0.03],
+        'neutral_net_share' => 0.25,
+        'regularity' => ['month' => [10, 12], 'quarter' => [3, 4], 'year' => [2, 3]], // [k, of n] periods with at least one transaction
+    ],
     'scramble_prod_auth' => env('SCRAMBLE_PROD_AUTH', 'none'),
 
     // Optional settings, used primarily for the public facing Sandbox environment
