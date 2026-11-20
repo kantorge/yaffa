@@ -35,7 +35,11 @@ function rechargeUser(bool $enabled = true): User
 function rechargeItem(User $user, string $type, Category $category, string $amount, array $tagIds = [], bool $schedule = false, ?string $date = null, ?int $currencyId = null): TransactionItem
 {
     $factory = Transaction::factory()->for($user);
-    $factory = $type === 'deposit' ? $factory->deposit($user) : $factory->withdrawal($user);
+    $factory = match ($type) {
+        'deposit' => $factory->deposit($user),
+        'transfer' => $factory->transfer($user),
+        default => $factory->withdrawal($user),
+    };
     // make() + save() skips the factory's afterCreating hook, which adds random items and tags
     $transaction = $factory->make(array_filter(['schedule' => $schedule ?: null, 'date' => $date, 'currency_id' => $currencyId]));
     $transaction->save();
@@ -354,6 +358,24 @@ it('hides tags whose latest item is before the backstop date, keeping the full b
 
     expect($balances->pluck('id')->all())->toBe([$spanning->id])
         ->and($balances->first()['settled'])->toBeTrue();
+});
+
+it('keeps a tag whose only activity after the backstop date is a transfer, without counting the transfer', function () {
+    $user = rechargeUser();
+    AccountEntity::factory()->asAccount($user)->create();
+    $user->update(['recharge_backstop_date' => '2026-03-01']);
+    $recharge = Category::factory()->for($user)->create(['tag_requirement' => 'required_nil']);
+    $tag = Tag::factory()->for($user)->create();
+
+    rechargeItem($user, 'withdrawal', $recharge, '40', [$tag->id], date: '2026-02-10');
+    rechargeItem($user, 'transfer', $recharge, '40', [$tag->id], date: '2026-03-05');
+
+    $this->actingAs($user);
+    $balances = app(RechargeTagService::class)->tagBalances($user);
+
+    expect($balances->pluck('id')->all())->toBe([$tag->id])
+        ->and($balances->first()['balance'])->toBe('-40.0000')
+        ->and($balances->first()['settled'])->toBeFalse();
 });
 
 it('never settles a tag whose balance has an unconverted foreign amount', function () {

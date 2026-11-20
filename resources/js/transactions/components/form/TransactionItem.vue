@@ -505,6 +505,12 @@
         loadSelectData()
           .then((data) => {
             this.selectData = data;
+            // The first lookup came back empty when the preload failed
+            loadTagRequiredCategoryIds().then((ids) => {
+              if (!this.unmounted) {
+                this.tagRequiredCategoryIds = ids;
+              }
+            });
             [this.categorySelect, this.tagSelect].forEach((select) => {
               if (!this.unmounted && select.isOpen) {
                 select.load(select.control_input.value);

@@ -121,6 +121,19 @@ class RechargeTagService
             ->get()
             ->groupBy('tag_id');
 
+        // Latest activity per tag, transfers included: only the backstop filter uses it, so a tag
+        // with a recent non-balance item keeps its full balance on the report.
+        $lastActivity = DB::table('transaction_items_tags as it')
+            ->join('transaction_items as i', 'i.id', '=', 'it.transaction_item_id')
+            ->join('transactions', 'transactions.id', '=', 'i.transaction_id')
+            ->whereIn('it.tag_id', $tagIds)
+            ->where('transactions.user_id', $user->id)
+            ->where('transactions.schedule', false)
+            ->groupBy('it.tag_id')
+            ->selectRaw('it.tag_id, MAX(transactions.date) as last_date')
+            ->pluck('last_date', 'tag_id')
+            ->map(fn (mixed $date) => $this->dateString($date));
+
         $baseCurrency = $this->getBaseCurrency($user->id);
         // CurrencyTrait resolves the user through auth(); the pages are only reachable by the owner.
         $ratesMap = $baseCurrency && auth()->id() === $user->id ? $this->allCurrencyRatesByMonth() : [];
@@ -168,7 +181,11 @@ class RechargeTagService
                 ];
             })
             // Hide tags with no activity on or after the backstop date
-            ->filter(fn (array $row) => $backstop === null || ($row['last_date'] !== null && $row['last_date'] >= $backstop))
+            ->filter(function (array $row) use ($backstop, $lastActivity): bool {
+                $lastDate = $lastActivity->get($row['id']);
+
+                return $backstop === null || ($lastDate !== null && $lastDate >= $backstop);
+            })
             ->values();
     }
 
