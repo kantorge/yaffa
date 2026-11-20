@@ -14,6 +14,7 @@ on:
       - 'composer.lock'
       - 'phpunit.xml'
       - 'tests/Pest.php'
+      - '.github/workflows/test-feature.yml'
 
   workflow_dispatch:
 
@@ -51,9 +52,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Start MySQL service
-        run: sudo /etc/init.d/mysql start
 
       - name: Get composer cache directory
         run: echo "COMPOSER_CACHE_DIR=$(composer config cache-files-dir)" >> $GITHUB_ENV
