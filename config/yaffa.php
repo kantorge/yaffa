@@ -61,6 +61,8 @@ return [
 
     // Optional settings, used primarily for the public facing Sandbox environment
     'sandbox_mode' => env('SANDBOX_MODE', false),
+    // Operator opt-in: let users point the AI provider at private/LAN hosts (e.g. local Ollama). Link-local/metadata stay blocked.
+    'ai_allow_private_endpoints' => env('AI_ALLOW_PRIVATE_ENDPOINTS', false),
     'gtm_container_id' => env('GTM_CONTAINER_ID'),
 
     // These are not actual config values, but a list of supported date presets for account details.

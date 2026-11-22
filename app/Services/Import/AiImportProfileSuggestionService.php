@@ -116,8 +116,8 @@ class AiImportProfileSuggestionService
             // allowAdditionalProperties: true (dynamic keys) which is incompatible
             // with strict mode and causes OpenAI to reject the schema.
             $response = Prism::structured()
-                ->using($config->provider, $config->model)
-                ->usingProviderConfig(['api_key' => $config->api_key])
+                ->using($config->prismProvider(), $config->model)
+                ->usingProviderConfig($config->prismConfig())
                 ->withSchema($this->buildSuggestionSchema())
                 ->withPrompt($prompt)
                 ->asStructured();

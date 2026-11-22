@@ -150,13 +150,11 @@ class AiStepGateway
         ObjectSchema $schema,
     ): array {
         $pendingRequest = Prism::structured()
-            ->using($config->provider, $config->model)
-            ->usingProviderConfig([
-                'api_key' => $config->api_key,
-            ])
+            ->using($config->prismProvider(), $config->model)
+            ->usingProviderConfig($config->prismConfig())
             ->withSchema($schema);
 
-        if ($config->provider === 'openai') {
+        if ($config->provider === 'openai') { // not openai_compatible: strict json_schema is unsupported on many servers
             $pendingRequest = $pendingRequest->withProviderOptions([
                 'schema' => [
                     'strict' => true,
@@ -185,10 +183,8 @@ class AiStepGateway
         bool $promptChatHistoryEnabled,
     ): string {
         $pendingRequest = Prism::text()
-            ->using($config->provider, $config->model)
-            ->usingProviderConfig([
-                'api_key' => $config->api_key,
-            ]);
+            ->using($config->prismProvider(), $config->model)
+            ->usingProviderConfig($config->prismConfig());
 
         $response = $promptChatHistoryEnabled
             ? $pendingRequest

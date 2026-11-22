@@ -89,13 +89,50 @@
             </div>
           </div>
 
+          <div v-if="isCustomModelProvider" class="row mb-3">
+            <label for="base_url" class="col-form-label col-sm-3">
+              {{ __('Base URL') }}
+            </label>
+            <div class="col-sm-9">
+              <input
+                id="base_url"
+                v-model="form.base_url"
+                type="url"
+                class="form-control"
+                name="base_url"
+                maxlength="2048"
+                placeholder="https://api.example.com/v1"
+              />
+              <HasError field="base_url" :form="form" />
+              <small class="form-text text-muted">
+                {{
+                  __(
+                    'Base URL of an OpenAI-compatible API, including the version path (for example /v1).',
+                  )
+                }}
+              </small>
+            </div>
+          </div>
+
           <div v-if="form.provider" class="row mb-3">
             <label for="model" class="col-form-label col-sm-3">
               {{ __('Model') }}
             </label>
             <div class="col-sm-9">
               <div class="input-group">
+                <input
+                  v-if="isCustomModelProvider"
+                  id="model"
+                  v-model="form.model"
+                  type="text"
+                  class="form-control"
+                  name="model"
+                  maxlength="255"
+                  :placeholder="__('Model name')"
+                  @change="onModelChange"
+                />
                 <select
+                  v-else
                   id="model"
                   v-model="form.model"
                   class="form-select"
@@ -140,7 +177,10 @@
             </div>
           </div>
 
-          <div v-if="modelSupportsVision" class="row mb-3">
+          <div
+            v-if="modelSupportsVision || isCustomModelProvider"
+            class="row mb-3"
+          >
             <label for="vision_enabled" class="col-form-label col-sm-3">
               {{ __('Vision AI') }}
             </label>
@@ -159,9 +199,13 @@
               </div>
               <small class="form-text text-muted">
                 {{
-                  __(
-                    'Uses the selected model to process image-based documents. Additional AI costs apply.',
-                  )
+                  isCustomModelProvider
+                    ? __(
+                        'Enable only if your model accepts image input, otherwise processing of images will fail.',
+                      )
+                    : __(
+                        'Uses the selected model to process image-based documents. Additional AI costs apply.',
+                      )
                 }}
               </small>
             </div>
@@ -334,6 +378,7 @@
         provider: '',
         model: '',
         api_key: '',
+        base_url: '',
         vision_enabled: false,
       }),
       configId: null,
@@ -392,6 +437,9 @@
             ? name
             : `${name} (${__('Deprecated')})`,
         }));
+      },
+      isCustomModelProvider() {
+        return Boolean(this.providers[this.form.provider]?.custom_models);
       },
       selectedProviderSupported() {
         if (!this.form.provider) {
@@ -453,6 +501,7 @@
         return (
           this.form.provider &&
           this.form.model &&
+          (!this.isCustomModelProvider || this.form.base_url) &&
           (this.form.api_key || (this.hasConfig && !this.providerChanged))
         );
       },
@@ -501,6 +550,7 @@
               this.originalProvider = response.data.provider;
               this.form.provider = response.data.provider;
               this.form.model = response.data.model;
+              this.form.base_url = response.data.base_url || '';
               this.form.vision_enabled = Boolean(response.data.vision_enabled);
               this.form.api_key = ''; // Don't populate API key for security
               this.hasConfig = true;
@@ -520,11 +570,12 @@
       onProviderChange() {
         // Reset model when provider changes
         this.form.model = '';
+        this.form.base_url = '';
         this.form.vision_enabled = false;
         this.testResult = null;
       },
       onModelChange() {
-        if (!this.modelSupportsVision) {
+        if (!this.modelSupportsVision && !this.isCustomModelProvider) {
           this.form.vision_enabled = false;
         }
         this.testResult = null;
@@ -592,6 +643,9 @@
           model: this.form.model,
           api_key: this.form.api_key || (useExistingKey ? '__existing__' : ''),
         };
+        if (this.isCustomModelProvider) {
+          testData.base_url = this.form.base_url;
+        }
 
         axios
           .post(this.route('api.v1.ai.config.test'), testData)

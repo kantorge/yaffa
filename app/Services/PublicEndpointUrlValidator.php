@@ -18,7 +18,7 @@ class PublicEndpointUrlValidator
      *
      * @throws UnsafeEndpointUrlException
      */
-    public static function assertPublic(string $url): array
+    public static function assertPublic(string $url, bool $allowPrivate = false): array
     {
         $host = parse_url($url, PHP_URL_HOST);
 
@@ -28,14 +28,14 @@ class PublicEndpointUrlValidator
 
         $normalizedHost = Str::lower(mb_trim($host, '[]'));
 
-        if ($normalizedHost === 'localhost') {
+        if ($normalizedHost === 'localhost' && ! $allowPrivate) {
             throw new UnsafeEndpointUrlException('Endpoint URL must resolve to a public IP address.');
         }
 
         $resolvedIps = self::resolveIps($normalizedHost);
 
         foreach ($resolvedIps as $resolvedIp) {
-            if (self::isDisallowedIp($resolvedIp)) {
+            if (self::isDisallowedIp($resolvedIp, $allowPrivate)) {
                 throw new UnsafeEndpointUrlException('Endpoint URL must resolve to a public IP address.');
             }
         }
@@ -112,9 +112,17 @@ class PublicEndpointUrlValidator
         return array_values(array_unique($resolvedIps));
     }
 
-    private static function isDisallowedIp(string $ipAddress): bool
+    private static function isDisallowedIp(string $ipAddress, bool $allowPrivate = false): bool
     {
         $normalizedIpAddress = Str::lower($ipAddress);
+
+        // Operator opt-in (e.g. LAN LLM server): private/loopback allowed, link-local/metadata never.
+        if ($allowPrivate) {
+            return filter_var($ipAddress, FILTER_VALIDATE_IP) === false
+                || str_starts_with($normalizedIpAddress, '169.254.')
+                || str_starts_with($normalizedIpAddress, 'fe80:')
+                || in_array($normalizedIpAddress, ['0.0.0.0', '::'], true);
+        }
 
         if (in_array($normalizedIpAddress, ['::1', '0:0:0:0:0:0:0:1'], true)) {
             return true;
