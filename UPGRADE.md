@@ -14,6 +14,15 @@ Table of contents:
 
 Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option. Note the following changes that may need your attention:
 
+### Docker users: database image moves from MySQL 8.0 to 8.4
+
+MySQL 8.0 reached end of life in April 2026 and no longer receives security fixes, so the packaged `docker-compose.yml` now uses `mysql:8.4` (LTS). The application works on both 8.0 and 8.4; 8.4 is the tested and recommended version.
+
+- **The first start on 8.4 upgrades your data directory in place, and this cannot be rolled back.** Back up the `yaffa_db` volume (for example with `mysqldump`) before pulling the new compose file.
+- Keep the existing named database volume so the new container reuses your data.
+- MySQL 8.4 disables the `mysql_native_password` plugin by default. The standard setup is unaffected; if you created custom database accounts that use it, switch them to `caching_sha2_password`.
+- If you run YAFFA without the Docker image, nothing changes: your existing MySQL 8.0 keeps working, but upgrading the database to 8.4 or later is recommended.
+
 ### Fast Transaction Entry: document statuses, reprocessing and retention
 
 - **New document statuses** in `GET /api/v1/documents` (and `status` filters): `auto_recorded`, `duplicate`, `awaiting_itemization` and `dismissed`. API clients that switch over the status must handle them.

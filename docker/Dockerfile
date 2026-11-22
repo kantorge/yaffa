@@ -1,5 +1,5 @@
 # Stage 1: Build frontend assets with Vite
-FROM node:24-alpine AS assets
+FROM node:24.22.3-alpine AS assets
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN npm ci
 RUN npm run build
 
 # Stage 2: Base PHP + Apache setup (this part won't change often)
-FROM php:8.4-apache AS base
+FROM php:8.4.28-apache AS base
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     libzip-dev zip unzip git curl libxml2-dev zlib1g-dev libonig-dev \
     libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
+    && apt-get upgrade -y \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \

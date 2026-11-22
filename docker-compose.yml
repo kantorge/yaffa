@@ -27,7 +27,7 @@ services:
       - mailhog
       - selenium
   mysql:
-    image: 'mysql:8.0'
+    image: 'mysql:8.4'
     # Local dev/test only, never production: skip the per-commit fsync/binlog-sync durability
     # guarantees MySQL defaults to, since this container's data is disposable (migrate+seed
     # recreates it). Cuts write-heavy migrations/seeding/tests noticeably; on a host crash the
