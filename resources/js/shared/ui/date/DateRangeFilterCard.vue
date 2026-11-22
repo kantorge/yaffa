@@ -87,16 +87,8 @@
 
 <script>
   import { __ } from '@/shared/lib/i18n';
+  import { toIsoDateString } from '@/shared/lib/helpers';
   import presetCalculators from '@/shared/lib/date/presetDates';
-
-  function formatDate(date) {
-    if (!date) return null;
-    const d = date instanceof Date ? date : new Date(date);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
 
   export default {
     name: 'DateRangeFilterCard',
@@ -151,8 +143,8 @@
         const calculator = presetCalculators[preset];
         if (calculator) {
           const dates = calculator(new Date());
-          dateFrom = formatDate(dates.start);
-          dateTo = formatDate(dates.end);
+          dateFrom = toIsoDateString(dates.start);
+          dateTo = toIsoDateString(dates.end);
         }
       }
 
@@ -218,8 +210,8 @@
         const calculator = presetCalculators[this.selectedPreset];
         if (calculator) {
           const dates = calculator(new Date());
-          this.dateFrom = formatDate(dates.start);
-          this.dateTo = formatDate(dates.end);
+          this.dateFrom = toIsoDateString(dates.start);
+          this.dateTo = toIsoDateString(dates.end);
         } else {
           this.dateFrom = null;
           this.dateTo = null;

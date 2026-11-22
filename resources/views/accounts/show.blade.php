@@ -43,13 +43,13 @@
 
         <div class="card mb-3">
             <div class="card-header">
-                <div class="card-title collapsed collapse-control" data-coreui-toggle="collapse"
+                <div class="card-title collapse-control" data-coreui-toggle="collapse"
                     data-coreui-target="#cardActions">
                     <i class="fa fa-angle-down"></i>
                     {{ __('Actions') }}
                 </div>
             </div>
-            <ul class="list-group list-group-flush collapse" aria-expanded="false" id="cardActions">
+            <ul class="list-group list-group-flush collapse show" aria-expanded="true" id="cardActions">
                 <li class="list-group-item d-flex justify-content-between">
                     <span class="nav-link">
                         {{ __('Edit account') }}
@@ -58,16 +58,20 @@
                         <i class="fa-solid fa-edit"></i>
                     </a>
                 </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <a class="nav-link" href="{{ route('account.history', ['account' => $account]) }}">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span class="nav-link">
                         {{ __('Load account transaction history') }}
+                    </span>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ route('account.history', ['account' => $account]) }}">
+                        <i class="fa-solid fa-list"></i>
                     </a>
-                    <i class="fa-solid fa-clock text-warning" data-bs-toggle="tooltip"
-                        title="{{ __('This page can load slowly based on the number of transactions.') }}"></i>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">
-                    <a class="nav-link" href="{{ route('reports.cashflow', ['accountEntity' => $account->config->id]) }}">
-                        {{ __('Show account monthly history') }}
+                    <span class="nav-link">
+                        {{ __('Show account cash flow') }}
+                    </span>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ route('reports.cashflow', ['accountEntity' => $account->config->id]) }}">
+                        <i class="fa-solid fa-chart-line"></i>
                     </a>
                 </li>
                 <li class="list-group-item d-flex justify-content-between">

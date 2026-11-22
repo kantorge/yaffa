@@ -2,6 +2,7 @@
   <input
     :value="modelValue"
     type="text"
+    inputmode="decimal"
     @blur.stop="updateAmount($event.target)"
     @keydown.enter="onEnter"
     @paste.stop="updateAmount($event.target)"

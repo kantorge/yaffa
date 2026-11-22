@@ -260,7 +260,8 @@ it('offers a retry when the account and payee lists fail to load, and loads them
 })->group('extended');
 
 it('ranks a payee used in an earlier transaction of the same modal session', function () {
-    $payee = AccountEntity::factory()->asPayee($this->user)->create(['name' => 'Zeta Fresh Market']);
+    // Active: the factory makes one payee in five inactive, and an inactive one is listed with an "inactive" badge
+    $payee = AccountEntity::factory()->asPayee($this->user)->create(['name' => 'Zeta Fresh Market', 'active' => true]);
 
     // Which group of the account_to dropdown lists the new payee, if any
     $groupOfPayee = "(() => { const o = document.querySelector('#account_to-ts-dropdown [data-value=\"{$payee->id}\"]'); return o ? o.closest('.optgroup').querySelector('.optgroup-header').textContent.trim() : null; })()";

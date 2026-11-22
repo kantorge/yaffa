@@ -64,7 +64,11 @@
 </template>
 
 <script>
-  import { __, toFormattedCurrency, toFormattedDate } from '@/shared/lib/i18n';
+  import {
+    __,
+    toFormattedCurrency,
+    toFormattedShortDate,
+  } from '@/shared/lib/i18n';
   import DismissiblePanel from '@/shared/ui/DismissiblePanel.vue';
 
   export default {
@@ -92,13 +96,7 @@
         });
       },
       formatDate(dateString) {
-        return toFormattedDate(
-          dateString,
-          window.YAFFA?.userSettings?.locale || undefined,
-          __('Unknown'),
-          true,
-          { year: 'numeric', month: 'short', day: 'numeric' },
-        );
+        return toFormattedShortDate(dateString, undefined, __('Unknown'));
       },
       formatAmount(amount) {
         return toFormattedCurrency(

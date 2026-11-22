@@ -44,6 +44,11 @@ class CategoryRequest extends FormRequest
                 'required',
                 Rule::in(['month', 'quarter', 'year']),
             ],
+            // Absent on API creates (DB default: true); the web form always sends it (hidden 0 + checkbox)
+            'calculate_budget_suggestions' => [
+                'sometimes',
+                'boolean',
+            ],
         ];
     }
 

@@ -1,18 +1,12 @@
+import { toIsoDateString } from '@/shared/lib/helpers';
 import { __ } from '@/shared/lib/i18n';
 import presetCalculators from '@/shared/lib/date/presetDates';
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 // A real calendar date in YYYY-MM-DD form (rejects e.g. 2024-02-30)
 export function isValidDateString(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [y, m, d] = value.split('-').map(Number);
-  return formatDate(new Date(y, m - 1, d)) === value;
+  return toIsoDateString(new Date(y, m - 1, d)) === value;
 }
 
 /**

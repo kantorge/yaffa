@@ -26,19 +26,20 @@ trait CurrencyTrait
      * Load an array for all currencies, with an average rate by month
      * As this data is not expected to change often, it is cached for a day
      *
+     * @param int|null $userId User ID (defaults to authenticated user)
      * @return array<int, array<string, string>> Map keyed by from_id then month. Rate
      *     values are kept as the raw decimal string from the DB (not cast to float), so
      *     callers doing Money arithmetic with them don't inherit float rounding drift.
      */
-    public function allCurrencyRatesByMonth(): array
+    public function allCurrencyRatesByMonth(?int $userId = null): array
     {
         // If, for any reason, we cannot retrieve the base currency, we return an empty array
-        $baseCurrency = $this->getBaseCurrency();
+        $userId ??= auth()->user()->id;
+        $baseCurrency = $this->getBaseCurrency($userId);
         if (!$baseCurrency) {
             return [];
         }
 
-        $userId = auth()->user()->id;
         $cacheKey = $this->getAllCurrencyRatesByMonthCacheKey($userId);
 
         return Cache::remember($cacheKey, now()->addDay(), function () use ($baseCurrency) {

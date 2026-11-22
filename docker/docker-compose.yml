@@ -96,7 +96,7 @@ services:
 
   # MySQL database container to store Yaffa data
   db:
-    image: mysql:8.0
+    image: mysql:8.4
     ports:
       - '${FORWARD_DB_PORT:-3306}:3306'
     environment:

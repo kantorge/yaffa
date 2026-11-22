@@ -7,7 +7,10 @@
   import * as am4charts from '@amcharts/amcharts4/charts';
   import am4themes_animated from '@amcharts/amcharts4/themes/animated';
   am4core.useTheme(am4themes_animated);
-  import { applyAmChartsLocalization } from '@/shared/lib/i18n/amcharts';
+  import {
+    applyAmChartsLocalization,
+    AMCHARTS_NUMBER_FORMAT_DEFAULTS,
+  } from '@/shared/lib/i18n/amcharts';
   import {
     applyAmChartsColorTheme,
     COLOR_MODE_EVENT,
@@ -106,6 +109,7 @@
         // Set up number formatting
         chart.numberFormatter.intlLocales = this.locale;
         chart.numberFormatter.numberFormat = {
+          ...AMCHARTS_NUMBER_FORMAT_DEFAULTS,
           style: 'currency',
           currency: this.baseCurrency.iso_code,
           minimumFractionDigits: 0,

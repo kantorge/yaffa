@@ -180,6 +180,7 @@
     processTransaction,
     initializeBootstrapTooltips,
     getArrayParamFromUrl,
+    toIsoDateString,
   } from '@/shared/lib/helpers';
   import { buildFilterCacheKey, buildBreakdownCacheKey } from './helpers';
   import * as toastHelpers from '@/shared/lib/toast';
@@ -191,15 +192,6 @@
   import { getLeftControlPanelToggleState } from '@/shared/lib/ui/leftControlPanelToggle';
   import presetCalculators from '@/shared/lib/date/presetDates';
   import { readDateRangeParams } from '@/shared/lib/date/dateRangeParams';
-
-  function formatDate(date) {
-    if (!date) return null;
-    const d = date instanceof Date ? date : new Date(date);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
 
   const TRANSACTIONS_CACHE_KEY = 'yaffa_transactions_cache';
   const BREAKDOWN_CACHE_KEY = 'yaffa_breakdown_cache';
@@ -226,8 +218,8 @@
 
       if (datePreset && !hasExplicitDates) {
         const dates = presetCalculators[datePreset](new Date());
-        dateFrom = formatDate(dates.start);
-        dateTo = formatDate(dates.end);
+        dateFrom = toIsoDateString(dates.start);
+        dateTo = toIsoDateString(dates.end);
       }
 
       return {

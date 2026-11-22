@@ -20,6 +20,11 @@ import { STORAGE_SCALE } from '@/shared/lib/money/scale';
 // combination instead. Each page here is a fresh module load (this app is not a SPA - see
 // resources/js/CLAUDE.md), so these never accumulate beyond what a single page actually uses.
 const numberFormatterCache = new Map();
+
+// Some locales (e.g. hu, es, pl) leave 4-digit numbers ungrouped ("7772" next to "19 000"), which
+// looks inconsistent in tables and charts. Every number shown to the user is grouped; pass
+// useGrouping explicitly to override.
+export const NUMBER_FORMAT_DEFAULTS = Object.freeze({ useGrouping: 'always' });
 const dateTimeFormatterCache = new Map();
 
 function formatterCacheKey(locale, options) {
@@ -35,6 +40,7 @@ function formatterCacheKey(locale, options) {
  * @returns {Intl.NumberFormat}
  */
 export function getCachedNumberFormatter(locale, options) {
+  options = { ...NUMBER_FORMAT_DEFAULTS, ...options };
   const key = formatterCacheKey(locale, options);
 
   if (!numberFormatterCache.has(key)) {
@@ -172,6 +178,27 @@ export function toFormattedDate(
   }
 
   return getCachedDateTimeFormatter(locale, dateOptions).format(date);
+}
+
+/**
+ * Formats a "YYYY-MM-DD" date-only string as a short, locale-aware date (e.g. "Jan 5, 2025").
+ * Thin wrapper over toFormattedDate() for the import screens.
+ *
+ * @param {*} input
+ * @param {string} [locale] Defaults to the user's locale from window.YAFFA, or the browser's.
+ * @param {*} fallback Returned when input is empty or not a valid date.
+ * @returns {string}
+ */
+export function toFormattedShortDate(
+  input,
+  locale = window.YAFFA?.userSettings?.locale || undefined,
+  fallback = '',
+) {
+  return toFormattedDate(input, locale, fallback, true, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 // Date.prototype.toLocaleString()'s own default (no options) formats both the date and time

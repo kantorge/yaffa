@@ -266,6 +266,8 @@
     },
 
     mounted() {
+      // Blank new-budget state, so a prefill's baseline never leaks into later forms
+      this.blankData = JSON.parse(JSON.stringify(this.form.data()));
       this.initializeCategorySelect();
       this.initializeAccountSelect();
     },
@@ -276,11 +278,21 @@
     },
 
     methods: {
-      show(budgetId = null) {
+      /**
+       * @param {number|null} budgetId Budget to load (edit, replace); null for a new one
+       * @param {Object|null} prefill Optional values applied on top (budget suggestions):
+       *   amount, transaction_type, start_date, and for new budgets category_id,
+       *   category_name, frequency, interval, end_date
+       */
+      show(budgetId = null, prefill = null) {
         this.resetForm();
 
         if (budgetId !== null) {
-          this.loadBudgetData(budgetId);
+          this.loadBudgetData(budgetId, prefill);
+        } else if (prefill) {
+          this.applyPrefill(prefill);
+          // The prefilled values are the clean baseline, like for a loaded budget
+          this.form.originalData = JSON.parse(JSON.stringify(this.form.data()));
         }
 
         this.$refs.formModal.show();
@@ -353,7 +365,45 @@
           });
       },
 
-      loadBudgetData(budgetId) {
+      applyPrefill(prefill, currency = window.YAFFA.userSettings.baseCurrency) {
+        const precision = currency?.generic_decimal_precision ?? 2;
+        this.form.amount = Number(prefill.amount.toFixed(precision));
+        this.form.transaction_type = prefill.transaction_type;
+        this.form.start_date = prefill.start_date;
+
+        if (prefill.category_id) {
+          this.form.category_id = prefill.category_id;
+          setSelected(
+            this.categorySelect,
+            { id: prefill.category_id, text: prefill.category_name },
+            { silent: true },
+          );
+        }
+        if (prefill.frequency) {
+          this.form.frequency = prefill.frequency;
+          this.form.interval = prefill.interval;
+        }
+        if (prefill.end_date) {
+          this.form.end_date = prefill.end_date;
+        }
+
+        // A replace closes the source period the day before the new one starts
+        if (this.form.original_schedule_config) {
+          const start = parseIsoDate(prefill.start_date);
+          const end = new Date(start);
+          end.setDate(end.getDate() - 1);
+          this.form.original_schedule_config.end_date = toIsoDateString(end);
+          if (
+            this.form.end_date &&
+            toDateInputValue(this.form.end_date) <
+              toDateInputValue(this.form.start_date)
+          ) {
+            this.form.end_date = null;
+          }
+        }
+      },
+
+      loadBudgetData(budgetId, prefill = null) {
         this.budgetId = budgetId;
 
         fetch(route('api.v1.budgets.show', { budget: budgetId }))
@@ -451,6 +501,10 @@
                 toIsoDateString(originalEndDate);
             }
 
+            if (prefill) {
+              this.applyPrefill(prefill, currency);
+            }
+
             // The freshly-loaded values are the "clean" baseline for the
             // dirty check in FormModal, not the blank values the Form was
             // constructed with.
@@ -467,6 +521,9 @@
       },
 
       resetForm() {
+        if (this.blankData) {
+          this.form.originalData = JSON.parse(JSON.stringify(this.blankData));
+        }
         this.form.reset();
         this.form.errors.clear();
 
