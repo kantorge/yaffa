@@ -1,5 +1,41 @@
 # Changelog
 
+## [4.7.0](https://github.com/kantorge/yaffa/compare/v4.6.0...v4.7.0) (2026-11-22)
+
+
+### 🛠️ Chores
+
+* remove date helper function duplication ([5dc6256](https://github.com/kantorge/yaffa/commit/5dc6256708ac65da0b30ae02b976870ad3e7ea9f))
+
+
+### 🎡 Continuous Integration
+
+* fix the unit/feature MySQL step on ubuntu-26.04 and a flaky payee browser test ([#611](https://github.com/kantorge/yaffa/issues/611)) ([a1e3343](https://github.com/kantorge/yaffa/commit/a1e33433f14aa97ebdaae053e593ef69a719854d))
+
+
+### 📚 Documentation
+
+* mysql upgrade note ([8211eee](https://github.com/kantorge/yaffa/commit/8211eee54f2747416915ec234d59e93d8c7bf714))
+
+
+### ✨ Features
+
+* add budget drift suggestions feature ([#610](https://github.com/kantorge/yaffa/issues/610)) ([1c54285](https://github.com/kantorge/yaffa/commit/1c54285d9977b7d0077fe77b121f1601e35635eb))
+* link to list of transactions from the budget report ([170a459](https://github.com/kantorge/yaffa/commit/170a459bf52109c6a4c8a2cb611d5500c457d573))
+
+
+### 🐛 Bug Fixes
+
+* security patches for infrastructure layers ([2a6d2cf](https://github.com/kantorge/yaffa/commit/2a6d2cf30d8b7069d9416b61ae698eb0e340fe01))
+* simplify the account action list ([37f1d7a](https://github.com/kantorge/yaffa/commit/37f1d7a83d9f3b0456a410a42837cc2fbdbca77c))
+* transaction form callback action availability ([cae0212](https://github.com/kantorge/yaffa/commit/cae02123851b5d500f3ea8f0e48d4012ed5c8f43))
+* transaction form mobile layout and behavior ([e393666](https://github.com/kantorge/yaffa/commit/e3936669c7906550024f56e61aca80cf0d834da8))
+
+
+### 🔨 Code Refactoring
+
+* simplify date formatters ([#603](https://github.com/kantorge/yaffa/issues/603)) ([1766546](https://github.com/kantorge/yaffa/commit/17665466c432c201c82653a6389c5388ebe4a7b9))
+
 ## [4.6.0](https://github.com/kantorge/yaffa/compare/v4.5.1...v4.6.0) (2026-11-07)
 
 
