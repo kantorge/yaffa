@@ -16,7 +16,7 @@ Most 4.x upgrades do not require any special manual steps beyond the usual appli
 
 ### Docker users: database image moves from MySQL 8.0 to 8.4
 
-MySQL 8.0 reached end of life in April 2026 and no longer receives security fixes, so the packaged `docker-compose.yml` now uses `mysql:8.4` (LTS). The application works on both 8.0 and 8.4; 8.4 is the tested and recommended version.
+MySQL 8.0 reached end of life in April 2026 and no longer receives security fixes, so the packaged `docker-compose.yml` now uses `mysql:8.4` (LTS). **Pulling a new YAFFA image does not change your database: your stack stays on MySQL 8.0 until you update your own copy of `docker-compose.yml`** (or change the `db` service's `image` to `mysql:8.4`). The application works on both 8.0 and 8.4; 8.4 is the tested and recommended version.
 
 - **The first start on 8.4 upgrades your data directory in place, and this cannot be rolled back.** Back up the `yaffa_db` volume (for example with `mysqldump`) before pulling the new compose file.
 - Keep the existing named database volume so the new container reuses your data.
