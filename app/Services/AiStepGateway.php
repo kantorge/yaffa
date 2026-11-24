@@ -152,6 +152,7 @@ class AiStepGateway
         $pendingRequest = Prism::structured()
             ->using($config->prismProvider(), $config->model)
             ->usingProviderConfig($config->prismConfig())
+            ->withClientOptions(['allow_redirects' => false])
             ->withSchema($schema);
 
         if ($config->provider === 'openai') { // not openai_compatible: strict json_schema is unsupported on many servers
@@ -184,7 +185,8 @@ class AiStepGateway
     ): string {
         $pendingRequest = Prism::text()
             ->using($config->prismProvider(), $config->model)
-            ->usingProviderConfig($config->prismConfig());
+            ->usingProviderConfig($config->prismConfig())
+            ->withClientOptions(['allow_redirects' => false]);
 
         $response = $promptChatHistoryEnabled
             ? $pendingRequest

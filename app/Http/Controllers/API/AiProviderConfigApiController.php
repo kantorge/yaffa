@@ -188,6 +188,7 @@ class AiProviderConfigApiController extends Controller
                     $validated['api_key'],
                     $validated['base_url'] ?? null,
                 ))
+                ->withClientOptions(['allow_redirects' => false])
                 ->withPrompt('Hello, this is a test. Reply with "OK".')
                 ->asText();
 

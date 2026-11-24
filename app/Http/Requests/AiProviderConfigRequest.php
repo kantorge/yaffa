@@ -70,7 +70,9 @@ class AiProviderConfigRequest extends FormRequest
             'api_key' => $apiKeyRules,
             'base_url' => $this->isCustomModelProvider((string) $this->input('provider'))
                 ? [
+                    'bail',
                     'required',
+                    'string',
                     'url:http,https',
                     'max:2048',
                     function ($attribute, $value, $fail) {

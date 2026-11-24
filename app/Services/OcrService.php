@@ -273,6 +273,11 @@ class OcrService
      */
     private function modelSupportsVision(AiProviderConfig $config): bool
     {
+        // Custom-model providers have no catalogue; trust the user's vision_enabled setting.
+        if (config('ai-documents.providers.' . $config->provider . '.custom_models', false)) {
+            return true;
+        }
+
         $modelsConfig = config('ai-documents.providers.' . $config->provider . '.models', []);
 
         // Handle both list and associative array formats

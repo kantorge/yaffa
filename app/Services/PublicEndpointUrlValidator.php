@@ -116,11 +116,28 @@ class PublicEndpointUrlValidator
     {
         $normalizedIpAddress = Str::lower($ipAddress);
 
+        // Alibaba Cloud metadata address (inside the CGNAT range): never allowed.
+        if ($normalizedIpAddress === '100.100.100.200') {
+            return true;
+        }
+
         // Operator opt-in (e.g. LAN LLM server): private/loopback allowed, link-local/metadata never.
         if ($allowPrivate) {
-            return filter_var($ipAddress, FILTER_VALIDATE_IP) === false
-                || str_starts_with($normalizedIpAddress, '169.254.')
-                || str_starts_with($normalizedIpAddress, 'fe80:')
+            if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+                return true;
+            }
+
+            $packed = inet_pton($ipAddress);
+            // Unwrap IPv4-mapped IPv6 (::ffff:a.b.c.d) so the IPv4 checks apply.
+            if (mb_strlen($packed) === 16 && str_starts_with($packed, str_repeat("\0", 10) . "\xff\xff")) {
+                $ipv4 = inet_ntop(mb_substr($packed, 12));
+
+                return $ipv4 === '100.100.100.200' || self::isDisallowedIp($ipv4, true);
+            }
+
+            return str_starts_with($normalizedIpAddress, '169.254.')
+                // fe80::/10 link-local
+                || (mb_strlen($packed) === 16 && (ord($packed[0]) === 0xfe) && (ord($packed[1]) & 0xc0) === 0x80)
                 || in_array($normalizedIpAddress, ['0.0.0.0', '::'], true);
         }
 

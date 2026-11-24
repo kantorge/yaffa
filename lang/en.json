@@ -131,7 +131,7 @@
     "Are you looking for any of these payees?": "Are you looking for any of these payees?",
     "Are you sure you want to delete this item?": "Are you sure you want to delete this item?",
     "Base URL": "Base URL",
-    "Base URL of an OpenAI-compatible API, including the version path (for example /v1).": "Base URL of an OpenAI-compatible API, including the version path (for example /v1).",
+    "Base URL of an OpenAI-compatible API, including the version path (for example /v1). The server must support the Responses API (/v1/responses).": "Base URL of an OpenAI-compatible API, including the version path (for example /v1). The server must support the Responses API (/v1/responses).",
     "Budgets": "Budgets",
     "Case-insensitive text to look for in the document. Leave empty to always use this hint.": "Case-insensitive text to look for in the document. Leave empty to always use this hint.",
     "Category details": "Category details",

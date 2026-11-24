@@ -118,6 +118,7 @@ class AiImportProfileSuggestionService
             $response = Prism::structured()
                 ->using($config->prismProvider(), $config->model)
                 ->usingProviderConfig($config->prismConfig())
+                ->withClientOptions(['allow_redirects' => false])
                 ->withSchema($this->buildSuggestionSchema())
                 ->withPrompt($prompt)
                 ->asStructured();

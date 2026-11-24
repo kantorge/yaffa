@@ -107,7 +107,7 @@
               <small class="form-text text-muted">
                 {{
                   __(
-                    'Base URL of an OpenAI-compatible API, including the version path (for example /v1).',
+                    'Base URL of an OpenAI-compatible API, including the version path (for example /v1). The server must support the Responses API (/v1/responses).',
                   )
                 }}
               </small>
@@ -460,7 +460,7 @@
         );
       },
       selectedModelSupported() {
-        if (!this.form.model) {
+        if (!this.form.model || this.isCustomModelProvider) {
           return true;
         }
 
