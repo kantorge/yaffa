@@ -18,7 +18,7 @@ class PublicEndpointUrlValidator
      *
      * @throws UnsafeEndpointUrlException
      */
-    public static function assertPublic(string $url): array
+    public static function assertPublic(string $url, bool $allowPrivate = false): array
     {
         $host = parse_url($url, PHP_URL_HOST);
 
@@ -28,14 +28,14 @@ class PublicEndpointUrlValidator
 
         $normalizedHost = Str::lower(mb_trim($host, '[]'));
 
-        if ($normalizedHost === 'localhost') {
+        if ($normalizedHost === 'localhost' && ! $allowPrivate) {
             throw new UnsafeEndpointUrlException('Endpoint URL must resolve to a public IP address.');
         }
 
         $resolvedIps = self::resolveIps($normalizedHost);
 
         foreach ($resolvedIps as $resolvedIp) {
-            if (self::isDisallowedIp($resolvedIp)) {
+            if (self::isDisallowedIp($resolvedIp, $allowPrivate)) {
                 throw new UnsafeEndpointUrlException('Endpoint URL must resolve to a public IP address.');
             }
         }
@@ -112,9 +112,34 @@ class PublicEndpointUrlValidator
         return array_values(array_unique($resolvedIps));
     }
 
-    private static function isDisallowedIp(string $ipAddress): bool
+    private static function isDisallowedIp(string $ipAddress, bool $allowPrivate = false): bool
     {
         $normalizedIpAddress = Str::lower($ipAddress);
+
+        // Alibaba Cloud metadata address (inside the CGNAT range): never allowed.
+        if ($normalizedIpAddress === '100.100.100.200') {
+            return true;
+        }
+
+        // Operator opt-in (e.g. LAN LLM server): private/loopback allowed, link-local/metadata never.
+        if ($allowPrivate) {
+            if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
+                return true;
+            }
+
+            $packed = inet_pton($ipAddress);
+            // Unwrap IPv4-mapped IPv6 (::ffff:a.b.c.d) so the IPv4 checks apply.
+            if (mb_strlen($packed) === 16 && str_starts_with($packed, str_repeat("\0", 10) . "\xff\xff")) {
+                $ipv4 = inet_ntop(mb_substr($packed, 12));
+
+                return $ipv4 === '100.100.100.200' || self::isDisallowedIp($ipv4, true);
+            }
+
+            return str_starts_with($normalizedIpAddress, '169.254.')
+                // fe80::/10 link-local
+                || (mb_strlen($packed) === 16 && (ord($packed[0]) === 0xfe) && (ord($packed[1]) & 0xc0) === 0x80)
+                || in_array($normalizedIpAddress, ['0.0.0.0', '::'], true);
+        }
 
         if (in_array($normalizedIpAddress, ['::1', '0:0:0:0:0:0:0:1'], true)) {
             return true;

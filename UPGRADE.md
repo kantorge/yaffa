@@ -14,6 +14,12 @@ Table of contents:
 
 Most 4.x upgrades do not require any special manual steps beyond the usual application update procedure for your hosting option. Note the following changes that may need your attention:
 
+### AI: OpenAI-compatible providers (new `base_url` column)
+
+- A new "OpenAI-compatible" AI provider lets users enter a custom base URL, API key and free-text model name (OpenRouter, LiteLLM, vLLM, Ollama, LM Studio, ...). Run `php artisan migrate`: it adds a nullable `ai_provider_configs.base_url` column. Existing configurations are unchanged.
+- Custom endpoints must resolve to a public host by default. To allow private/LAN hosts (for example a local Ollama), set `AI_ALLOW_PRIVATE_ENDPOINTS=true`. This is an instance-wide operator setting; link-local and cloud-metadata addresses stay blocked either way. In Docker, `localhost` is the container itself: use the host's LAN IP or `host.docker.internal`.
+- Structured output uses JSON mode for custom models, and Vision AI only works if the chosen model accepts images.
+
 ### Docker users: database image moves from MySQL 8.0 to 8.4
 
 MySQL 8.0 reached end of life in April 2026 and no longer receives security fixes, so the packaged `docker-compose.yml` now uses `mysql:8.4` (LTS). **Pulling a new YAFFA image does not change your database: your stack stays on MySQL 8.0 until you update your own copy of `docker-compose.yml`** (or change the `db` service's `image` to `mysql:8.4`). The application works on both 8.0 and 8.4; 8.4 is the tested and recommended version.

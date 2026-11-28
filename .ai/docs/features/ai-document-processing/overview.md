@@ -126,3 +126,7 @@ AI Document Processing helps users turn receipts, invoices, email confirmations,
 ## Confidence Level
 
 High
+
+## OpenAI-compatible provider
+
+Provider key `openai_compatible` (`config/ai-documents.php`, `custom_models => true`) runs on Prism's `openai` driver with the per-config `ai_provider_configs.base_url` passed as `url` (`AiProviderConfig::prismProvider()` / `prismConfig()`). The model is free text and `vision_enabled` is user-controlled. The URL is validated with `PublicEndpointUrlValidator` on save and again at send time; private/loopback hosts are allowed only when the operator sets `AI_ALLOW_PRIVATE_ENDPOINTS` (`yaffa.ai_allow_private_endpoints`), and link-local/metadata ranges are always blocked. Unknown model names use Prism's JSON mode instead of strict `json_schema`.

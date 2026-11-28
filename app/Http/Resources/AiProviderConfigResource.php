@@ -20,6 +20,7 @@ class AiProviderConfigResource extends JsonResource
             'id' => $this->id,
             'provider' => $this->provider,
             'model' => $this->model,
+            'base_url' => $this->base_url,
             'vision_enabled' => $this->vision_enabled,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

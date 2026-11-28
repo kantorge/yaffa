@@ -74,6 +74,13 @@ return [
                 ],
             ],
         ],
+        // Any OpenAI-compatible endpoint: user supplies base URL and a free-text model name.
+        'openai_compatible' => [
+            'name' => 'OpenAI-compatible',
+            'supported' => true,
+            'custom_models' => true,
+            'models' => [],
+        ],
     ],
 
     /*

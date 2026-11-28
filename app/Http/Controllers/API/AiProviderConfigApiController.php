@@ -87,6 +87,7 @@ class AiProviderConfigApiController extends Controller
             'provider' => $request->input('provider'),
             'model' => $request->input('model'),
             'api_key' => $request->input('api_key'),
+            'base_url' => $request->input('base_url'),
             'vision_enabled' => (bool) $request->input('vision_enabled', false),
         ]);
 
@@ -112,6 +113,7 @@ class AiProviderConfigApiController extends Controller
         $updateData = [
             'provider' => $validated['provider'],
             'model' => $validated['model'],
+            'base_url' => $validated['base_url'] ?? null,
         ];
 
         if (array_key_exists('vision_enabled', $validated)) {
@@ -180,10 +182,13 @@ class AiProviderConfigApiController extends Controller
         try {
             // Try a simple completion to test the connection
             $response = Prism::text()
-                ->using($validated['provider'], $validated['model'])
-                ->usingProviderConfig([
-                    'api_key' => $validated['api_key'],
-                ])
+                ->using($validated['provider'] === 'openai_compatible' ? 'openai' : $validated['provider'], $validated['model'])
+                ->usingProviderConfig(AiProviderConfig::buildPrismConfig(
+                    $validated['provider'],
+                    $validated['api_key'],
+                    $validated['base_url'] ?? null,
+                ))
+                ->withClientOptions(['allow_redirects' => false])
                 ->withPrompt('Hello, this is a test. Reply with "OK".')
                 ->asText();
 

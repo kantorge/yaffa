@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\UnsafeEndpointUrlException;
 use App\Models\AiProviderConfig;
+use App\Services\PublicEndpointUrlValidator;
 use Illuminate\Validation\Rule;
 
 class AiProviderConfigRequest extends FormRequest
@@ -49,6 +51,10 @@ class AiProviderConfigRequest extends FormRequest
                 'max:' . self::DEFAULT_STRING_MAX_LENGTH, // Not really needed but for consistency
                 function ($attribute, $value, $fail) {
                     $provider = $this->input('provider');
+                    if ($this->isCustomModelProvider((string) $provider)) {
+                        return;
+                    }
+
                     $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
                     $models = array_is_list($modelsConfig) ? $modelsConfig : array_keys($modelsConfig);
 
@@ -62,6 +68,22 @@ class AiProviderConfigRequest extends FormRequest
                 'boolean',
             ],
             'api_key' => $apiKeyRules,
+            'base_url' => $this->isCustomModelProvider((string) $this->input('provider'))
+                ? [
+                    'bail',
+                    'required',
+                    'string',
+                    'url:http,https',
+                    'max:2048',
+                    function ($attribute, $value, $fail) {
+                        try {
+                            PublicEndpointUrlValidator::assertPublic($value, (bool) config('yaffa.ai_allow_private_endpoints'));
+                        } catch (UnsafeEndpointUrlException) {
+                            $fail(__('The :attribute must point to a public host.', ['attribute' => $attribute]));
+                        }
+                    },
+                ]
+                : ['prohibited'],
         ];
     }
 
@@ -100,6 +122,11 @@ class AiProviderConfigRequest extends FormRequest
         });
     }
 
+    private function isCustomModelProvider(string $provider): bool
+    {
+        return (bool) config('ai-documents.providers.' . $provider . '.custom_models', false);
+    }
+
     private function isProviderSupported(string $provider): bool
     {
         $providerConfig = config('ai-documents.providers.' . $provider, []);
@@ -113,6 +140,10 @@ class AiProviderConfigRequest extends FormRequest
 
     private function isModelSupported(string $provider, string $model): bool
     {
+        if ($this->isCustomModelProvider($provider)) {
+            return true;
+        }
+
         $modelsConfig = config('ai-documents.providers.' . $provider . '.models', []);
 
         if (array_is_list($modelsConfig)) {
